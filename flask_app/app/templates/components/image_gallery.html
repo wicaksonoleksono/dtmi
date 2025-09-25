@@ -1,0 +1,102 @@
+<!-- Image Gallery Component -->
+<div
+  x-show="message.processed_images && message.processed_images.length > 0"
+  class="mt-6 ml-14"
+  x-data="imageGallery()"
+>
+  <div
+    class="rounded-2xl shadow-lg backdrop-blur-sm overflow-hidden"
+    :class="darkMode ? 'bg-claude-surface-dark/80 border border-claude-border-dark' : 'bg-claude-surface/80 border border-claude-border'"
+  >
+    <!-- Images Header -->
+    <button
+      @click="isOpen = !isOpen"
+      class="w-full px-6 py-4 flex items-center justify-between transition-all duration-200 hover:opacity-80"
+    >
+      <div class="flex items-center space-x-4">
+        <div
+          class="w-8 h-8 rounded-xl bg-claude-primary flex items-center justify-center"
+        >
+          <svg
+            class="w-4 h-4 text-claude-text"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </div>
+        <div class="text-left">
+          <h4 class="font-medium">
+            <span x-text="message.processed_images.length"></span> Gambar
+            Terlampir
+          </h4>
+          <p class="text-xs opacity-70">
+            <span x-text="loadedImages.size"></span>/<span
+              x-text="message.processed_images.length"
+            ></span>
+            dimuat
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3">
+        <span
+          class="text-xs px-3 py-1 rounded-full bg-claude-primary text-claude-text"
+          >Gambar</span
+        >
+        <svg
+          class="w-5 h-5 transition-transform duration-200"
+          :class="isOpen ? 'rotate-180' : ''"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </div>
+    </button>
+
+    <!-- Images Grid -->
+    <div x-show="isOpen" x-transition:enter="transition ease-out duration-200">
+      <div class="p-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <template
+          x-for="(image, index) in message.processed_images"
+          :key="'image-' + index"
+        >
+          {% include 'components/image_thumbnail.html' %}
+        </template>
+      </div>
+    </div>
+  </div>
+
+  {% include 'components/image_modal.html' %}
+</div>
+
+<script>
+  function imageGallery() {
+    return {
+      isOpen: false,
+      selectedImage: null,
+      showModal: false,
+      loadedImages: new Set(),
+
+      formatFileSize(bytes) {
+        if (!bytes) return "Unknown";
+        const sizes = ["Bytes", "KB", "MB", "GB"];
+        if (bytes === 0) return "0 Byte";
+        const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+        return (
+          Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + " " + sizes[i]
+        );
+      },
+    };
+  }
+</script>

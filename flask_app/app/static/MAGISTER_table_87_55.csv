@@ -1,0 +1,32 @@
+No,Sifat,Nama Mata Kuliah,Kode,SKS
+15.,MKP,"Mekanika Struktur Ringan
+(Lightweight Structure Mechanics)",TKM2572304,3
+"Deskripsi Mata Kuliah (Course Description):
+Mata kuliah Mekanika Struktur Ringan merupakan mata kuliah yang membahas
+prinsip-prinsip mekanika struktur ringan, aplikasi dan simulasinya.
+Tujuan Pembelajaran (Course Objective):
+Penggunaan struktur ringan dalam berbagai aplikasi menjadi semakin
+diperhitungkan. Dalam dunia akademisi dan industri, engineers yang berkutat dalam
+pekerjaan struktur ringan harus memahami secara detail dengan teori tentang
+statika, stabilitas dari struktur ringan yang mana dapat diterapkan secara langsung
+dalam pekerjaannya dimana menuntut solusi cepat dari problem yang ada. Untuk
+mendapatkan pengetahuan yang kuat tentang hal tersebut, pengetahuan tentang
+solid struktur berbasis struktur ringan mutlak diperlukan. Di samping itu, juga
+diperlukan kemampuan untuk memahami metode numerik melalui penerapannya
+dalam perangkat lunak Finite Element Analysis (FEA) software. Perkuliahan ini
+merupakan paduan antara teori, praktek dan simulasi mengenai struktur ringan yang
+banyak diaplikasikan dalam dunia nyata. Diharapkan mahasiswa yang mengambil
+mata kuliah ini dapat memahami, menerapkan dan mengaplikasikan ilmu struktur
+ringan di kehidupan nyata baik dalam ranah pekerjaan sebagai professional
+engineers maupun sebagai akademisi.
+Capaian Pembelajaran Lulusan (CPL) atau Student Outcomes (SO): A1 dan B3
+Materi Pembelajaran (Outline Syllabus):
+● Latar belakang: pengetahuan awal tentang struktur ringan dan aplikasinya
+dalam berbagai bidang
+● Teori elastisitas, plane problem, dan strength criteria untuk isotropic
+material
+● Pengetahuan tentang truss structures, space frames, tension structures,
+dan tension-stabilized structures
+● Pengetahuan tentang thin-walled structures, shell structures, sandwhich
+structures, hybrid structure, dan membrane packaging
+● Pengetahuan tentang deployable structures, dan aplikasi dari deployable",,,,

@@ -1,0 +1,20 @@
+<!-- Reusable Radio Filter Component -->
+<div class="flex flex-wrap gap-2 mt-2" :class="justifyClass || 'justify-center'">
+  <div class="text-sm text-gray-600 dark:text-gray-400 mr-2 flex items-center" x-text="filterLabel">
+  </div>
+  <template x-for="option in filterOptions" :key="option.value">
+    <button
+      @click="selectValue(option.value)"
+      :disabled="isLoading"
+      class="inline-flex items-center gap-1 px-3 py-1 text-sm rounded-xl backdrop-blur-sm disabled:cursor-not-allowed disabled:opacity-50"
+      :class="selectedValue === option.value
+        ? 'bg-orange-500 border border-orange-500 text-white font-medium'
+        : (darkMode 
+            ? 'bg-claude-surface-dark/40 border border-claude-border-dark' 
+            : 'bg-claude-surface/40 border border-claude-border')"
+    >
+      <span x-show="option.icon" x-html="option.icon" class="w-4 h-4 leading-none"></span>
+      <span x-text="option.label" class="font-medium"></span>
+    </button>
+  </template>
+</div>

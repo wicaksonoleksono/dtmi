@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en" x-data="themeManager()" :class="{ 'dark': darkMode }">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>{% block title %}Tasya{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              claude: {
+                bg: "#fafaf9",
+                "bg-dark": "#0c0c0c",
+                surface: "#ffffff",
+                "surface-dark": "#1a1a1a",
+                border: "#e7e5e4",
+                "border-dark": "#292524",
+                text: "#1c1917",
+                "text-dark": "#fafaf9",
+                "text-muted": "#78716c",
+                "text-muted-dark": "#a8a29e",
+                primary: "#d6d3d1",
+                "primary-hover": "#a8a29e",
+                "primary-dark": "#404040",
+                "primary-dark-hover": "#525252",
+                accent: "#e7e5e4",
+                "accent-dark": "#292524",
+                orange: "#ea580c",
+                "orange-muted": "#fed7aa",
+              },
+            },
+            animation: {
+              "fade-in": "fadeIn 0.5s ease-in-out",
+              "slide-up": "slideUp 0.3s ease-out",
+              "pulse-gentle":
+                "pulseGentle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+            },
+            keyframes: {
+              fadeIn: {
+                "0%": { opacity: "0", transform: "translateY(10px)" },
+                "100%": { opacity: "1", transform: "translateY(0)" },
+              },
+              slideUp: {
+                "0%": { transform: "translateY(20px)", opacity: "0" },
+                "100%": { transform: "translateY(0)", opacity: "1" },
+              },
+              pulseGentle: {
+                "0%, 100%": { opacity: "1" },
+                "50%": { opacity: "0.7" },
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js"></script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"
+    ></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body
+    class="min-h-screen transition-all duration-500 ease-in-out"
+    :class="darkMode ? 'bg-claude-bg-dark text-claude-text-dark' : 'bg-claude-bg text-claude-text'"
+  >
+    <!-- Mobile overlay for sidebar -->
+    <div
+      x-show="sidebarOpen"
+      x-cloak
+      @click="sidebarOpen = false"
+      class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+      x-transition:enter="transition-opacity ease-linear duration-300"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="transition-opacity ease-linear duration-300"
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+    ></div>
+
+    <!-- Mobile header -->
+    <header
+      class="lg:hidden fixed top-0 left-0 right-0 z-30 p-4 backdrop-blur-xl border-b"
+      :class="darkMode ? 'bg-claude-surface-dark/80 border-claude-border-dark' : 'bg-claude-surface/80 border-claude-border'"
+    >
+      <div class="flex items-center justify-between">
+        <button
+          @click="sidebarOpen = !sidebarOpen"
+          class="p-2 rounded-lg"
+          :class="darkMode ? 'hover:bg-claude-border-dark' : 'hover:bg-claude-border'"
+        >
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 6h16M4 12h16M4 18h16"
+            ></path>
+          </svg>
+        </button>
+        <div class="flex items-center space-x-3">
+          <img
+            src="{{ url_for('static', filename='tasyapp.jpg') }}"
+            alt="Tasya"
+            class="w-8 h-8 rounded-lg object-cover"
+          />
+          <span class="font-semibold">Tasya</span>
+        </div>
+        <button
+          @click="darkMode = !darkMode; localStorage.setItem('claude-theme', darkMode ? 'dark' : 'light')"
+          class="p-2 rounded-lg transition-all duration-300"
+          :class="darkMode ? 'hover:bg-claude-border-dark' : 'hover:bg-claude-border'"
+        >
+          <svg
+            x-show="!darkMode"
+            class="w-5 h-5"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"
+            />
+          </svg>
+          <svg
+            x-show="darkMode"
+            class="w-5 h-5"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    {% include 'components/sidebar.html' %}
+
+    <main class="lg:ml-80 min-h-screen pt-16 lg:pt-0">
+      {% block content %}{% endblock %}
+    </main>
+
+    {% include 'components/background.html' %}
+
+    <!-- Anti-DevTools Easter Egg Overlay -->
+    <div
+      id="devtools-overlay"
+      onclick="closeOverlay()"
+      oncontextmenu="closeOverlay(); return false;"
+      class="fixed inset-0 bg-black z-[999999] cursor-pointer hidden"
+      style="animation: overlaySlideIn 0.6s ease-out"
+    >
+      <div
+        id="devtools-text"
+        class="flex justify-center items-center h-full text-white text-m opacity-0"
+        style="
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+            'Liberation Mono', 'Courier New', monospace;
+          animation: textFadeInUp 0.5s ease-out 0.3s forwards;
+        "
+      >
+        <!-- The BOX: fixed to ~3 characters wide -->
+        <!-- prettier-ignore -->
+        <div
+          class="inline-block w-[40ch] px-4 py-3 leading-relaxed font-normal whitespace-normal"
+          style="text-indent: 1.5em; text-align: start; text-justify: none;"
+        >
+          Beli jambu di pasar, jangan di retas ya, kasihan maintainer nya. 
+          kalau mau mengasah kemantapan kamu mending langsung
+          <!-- <span class="line-through text-gray-400/90"></span> -->
+        <a href="https://www.hackthebox.com/capture-the-flag"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-yellow-400 font-bold no-underline drop-shadow-[0_0_5px_rgb(250,204,21)] hover:text-yellow-300 hover:drop-shadow-[0_0_10px_rgb(253,224,71)]">
+        di website ini aja
+        </a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Theme Manager Component
+      function themeManager() {
+        return {
+          darkMode: false,
+          sidebarOpen: false,
+
+          init() {
+            const savedTheme = localStorage.getItem("claude-theme");
+            if (savedTheme !== null) {
+              this.darkMode = savedTheme === "dark";
+            } else {
+              this.darkMode = window.matchMedia(
+                "(prefers-color-scheme: dark)"
+              ).matches;
+              localStorage.setItem(
+                "claude-theme",
+                this.darkMode ? "dark" : "light"
+              );
+            }
+
+            // Close sidebar on resize to desktop
+            window.addEventListener("resize", () => {
+              if (window.innerWidth >= 1024) {
+                this.sidebarOpen = false;
+              }
+            });
+          },
+
+          toggleTheme() {
+            this.darkMode = !this.darkMode;
+            localStorage.setItem(
+              "claude-theme",
+              this.darkMode ? "dark" : "light"
+            );
+          },
+        };
+      }
+
+      // Utility Functions
+      function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+          const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+          };
+          clearTimeout(timeout);
+          timeout = setTimeout(later, wait);
+        };
+      }
+
+      // Performance optimizations
+      document.addEventListener("DOMContentLoaded", function () {
+        const imageObserver = new IntersectionObserver(
+          (entries, observer) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                const img = entry.target;
+                if (img.dataset.src) {
+                  img.src = img.dataset.src;
+                  img.removeAttribute("data-src");
+                  observer.unobserve(img);
+                }
+              }
+            });
+          },
+          {
+            rootMargin: "50px 0px",
+            threshold: 0.01,
+          }
+        );
+
+        const lazyImages = document.querySelectorAll("img[data-src]");
+        lazyImages.forEach((img) => imageObserver.observe(img));
+      });
+
+      document.addEventListener("alpine:init", () => {
+        window
+          .matchMedia("(prefers-color-scheme: dark)")
+          .addEventListener("change", (e) => {
+            const savedTheme = localStorage.getItem("claude-theme");
+            if (savedTheme === null) {
+              Alpine.store("theme", { darkMode: e.matches });
+            }
+          });
+      });
+
+      // Smooth overlay close animation
+      function closeOverlay() {
+        const overlay = document.getElementById("devtools-overlay");
+        overlay.style.animation = "overlayFadeOut 0.4s ease-in forwards";
+        setTimeout(() => {
+          overlay.classList.add("hidden");
+          overlay.style.animation = "overlaySlideIn 0.6s ease-out"; // Reset to slide animation for next time
+          const text = document.getElementById("devtools-text");
+          if (text) {
+            text.style.opacity = "0"; // Reset text opacity
+            text.style.animation = "textFadeInUp 0.5s ease-out 0.3s forwards"; // Reset text animation
+          }
+        }, 400);
+      }
+
+      // Anti-DevTools Easter Egg 😈 - ULTIMATE EDITION
+      (function () {
+        // 🎛️ SIMPLE CONTROL - One Variable Rules All
+        const ENABLE_ANTI_DEVTOOLS = true; // 🔴 true = trolling ON, false = trolling OFF
+
+        // Master kill switch
+        if (!ENABLE_ANTI_DEVTOOLS) {
+          console.log("😴 Anti-DevTools disabled");
+          return;
+        }
+
+        let devtools = false;
+        let debuggerActive = false;
+        const threshold = 160;
+
+        function detectDevTools() {
+          if (
+            window.outerHeight - window.innerHeight > threshold ||
+            window.outerWidth - window.innerWidth > threshold
+          ) {
+            if (!devtools) {
+              devtools = true;
+              document
+                .getElementById("devtools-overlay")
+                .classList.remove("hidden");
+              startDebuggerTroll(); // 😈 EVIL MODE ACTIVATED
+            }
+          } else {
+            devtools = false;
+            debuggerActive = false;
+          }
+        }
+
+        // EVIL LEVEL 2: Gentle Debugger Trolling 😈
+        function startDebuggerTroll() {
+          if (debuggerActive) return;
+          debuggerActive = true;
+
+          const trollInterval = setInterval(() => {
+            if (devtools) {
+              // Just one debugger statement - enough to be annoying
+              debugger; // 🔥 PAUSE
+              console.clear(); // Clear their console for extra confusion
+            } else {
+              clearInterval(trollInterval);
+              debuggerActive = false;
+            }
+          }, 3000); // Every 3 seconds - less aggressive
+        }
+
+        // Detect devtools by console tricks
+        let devtools_open = false;
+        const element = new Image();
+        Object.defineProperty(element, "id", {
+          get: function () {
+            devtools_open = true;
+            document
+              .getElementById("devtools-overlay")
+              .classList.remove("hidden");
+            debugger; // 🔥 IMMEDIATE PAUSE
+          },
+        });
+
+        // Console size detection trick
+        let devtools_open_2 = false;
+        const checker = {
+          toString: function () {
+            devtools_open_2 = true;
+            debugger; // 🔥 ANOTHER PAUSE
+          },
+        };
+
+        // Regular checks - less frequent for safety
+        setInterval(detectDevTools, 1000);
+        setInterval(() => {
+          // Only trigger detection methods when needed
+          if (!devtools) {
+            console.log("%c", element);
+            console.log(checker);
+          }
+        }, 5000);
+
+        // Block common devtools shortcuts
+        document.addEventListener("keydown", function (e) {
+          if (
+            e.key === "F12" ||
+            (e.ctrlKey && e.shiftKey && e.key === "I") ||
+            (e.ctrlKey && e.shiftKey && e.key === "C") ||
+            (e.ctrlKey && e.key === "u")
+          ) {
+            e.preventDefault();
+            document
+              .getElementById("devtools-overlay")
+              .classList.remove("hidden");
+            debugger; // 🔥 INSTANT PUNISHMENT
+            return false;
+          }
+        });
+
+        // Block right-click context menu inspect
+        document.addEventListener("contextmenu", function (e) {
+          e.preventDefault();
+          document
+            .getElementById("devtools-overlay")
+            .classList.remove("hidden");
+          debugger; // 🔥 NO MERCY
+          return false;
+        });
+
+        // Removed the random chaos - too risky for main site
+
+        // Console trick
+        console.log("%c", element);
+      })();
+    </script>
+
+    {% include 'components/styles.html' %}
+
+    <style>
+      /* Mobile optimizations */
+      @media (max-width: 768px) {
+        /* Hide scrollbars on mobile for cleaner look */
+        ::-webkit-scrollbar {
+          width: 0px;
+          background: transparent;
+        }
+
+        /* Prevent body scroll when sidebar is open */
+        body.sidebar-open {
+          overflow: hidden;
+        }
+
+        /* Improve touch targets */
+        button,
+        a,
+        [role="button"] {
+          min-height: 44px;
+          min-width: 44px;
+        }
+      }
+
+      /* Custom animations for the troll overlay */
+      @keyframes overlaySlideIn {
+        from {
+          opacity: 0;
+          transform: translateY(-100%);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes textFadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(50px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes overlayFadeOut {
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 0;
+        }
+      }
+      @media screen and (-webkit-min-device-pixel-ratio: 0) {
+        input,
+        textarea,
+        select {
+          font-size: 16px;
+        }
+      }
+    </style>
+  </body>
+</html>

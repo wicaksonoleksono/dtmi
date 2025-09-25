@@ -1,0 +1,11 @@
+<!-- Department Filter using reusable component -->
+<div 
+  x-data="{ 
+    filterLabel: 'Departemen:', 
+    filterOptions: depFilters, 
+    get selectedValue() { return selectedDep },
+    selectValue(value) { setDep(value) }
+  }"
+>
+  {% include 'components/radio_filter.html' %}
+</div>

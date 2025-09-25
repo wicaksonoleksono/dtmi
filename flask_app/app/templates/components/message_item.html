@@ -1,0 +1,71 @@
+<!-- Message Item Component -->
+<div
+  class="animate-slide-up"
+  :class="message.type === 'user' ? 'flex justify-end' : 'flex justify-start'"
+>
+  <div class="w-full max-w-4xl">
+    <!-- User Message -->
+    <div x-show="message.type === 'user'" class="ml-auto max-w-2xl">
+      <div
+        class="px-6 py-4 rounded-3xl shadow-lg backdrop-blur-sm"
+        :class="darkMode 
+                     ? 'bg-claude-primary-dark text-claude-text-dark' 
+                     : 'bg-claude-primary text-claude-text'"
+      >
+        <div
+          x-text="message.content"
+          class="text-sm leading-relaxed whitespace-pre-wrap"
+        ></div>
+      </div>
+    </div>
+
+    <!-- Bot Message -->
+    <div x-show="message.type === 'bot'" class="w-full">
+      <div class="flex items-start space-x-4">
+        <!-- Avatar -->
+        <div
+          class="w-10 h-10 rounded-2xl shadow-lg flex items-center justify-center flex-shrink-0 overflow-hidden"
+        >
+          <img
+            src="{{ url_for('static', filename='tasyapp.jpg') }}"
+            alt="Tasya Avatar"
+            class="w-full h-full object-cover"
+          />
+        </div>
+        <!-- Message Content -->
+        <div class="flex-1 min-w-0">
+          <div
+            class="px-6 py-4 rounded-3xl rounded-tl-lg shadow-lg backdrop-blur-sm max-h-96 overflow-y-auto scroll-smooth"
+            :class="darkMode ? 'bg-claude-surface-dark/80 border border-claude-border-dark' : 'bg-claude-surface/80 border border-claude-border'"
+            style="scrollbar-width: thin"
+          >
+            <div
+              x-html="message.content"
+              class="text-sm leading-relaxed prose prose-sm max-w-none"
+              :class="darkMode ? 'prose-invert' : ''"
+            ></div>
+
+            <!-- Streaming cursor -->
+            <div x-show="message.streaming" class="inline-block">
+              <span class="animate-pulse">▊</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Show loading state for metadata -->
+      <div
+        x-show="message.streaming && message.content.length > 0"
+        class="ml-14 mt-2"
+      >
+        <div class="text-xs text-gray-500 animate-pulse">
+          Loading references and images...
+        </div>
+      </div>
+
+      {% include 'components/csv_tables.html' %} {% include
+      'components/image_gallery.html' %} {% include 'components/references.html'
+      %}
+    </div>
+  </div>
+</div>

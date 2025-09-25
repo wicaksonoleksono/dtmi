@@ -1,0 +1,14 @@
+.env
+db
+venv
+legacy
+./venv
+__pycache__
+*.pyc
+db.bak 
+bak/
+genansw/
+originalpdf/
+PDF/
+chunk/
+chunk.v2/

@@ -1,0 +1,21 @@
+Nilai Angka,Nilai Huruf
+Nilai ≥90,A
+"86,5 ≤Nilai < 90",A-
+"83 ≤Nilai < 86,5",A/B
+"79,5 ≤Nilai < 83",B+
+"76 ≤Nilai < 79,5",B
+"72,5 ≤Nilai < 76",B-
+"69 ≤Nilai < 72,5",B/C
+"65,5 ≤Nilai < 69",C+
+"62 ≤Nilai < 65,5",C
+"58,5 ≤Nilai < 62",C-
+"55 ≤Nilai < 58,5",C/D
+"51,5 ≤Nilai < 55",D+
+"50 ≤Nilai < 51,5",D
+Nilai < 50,E
+Komponen Penilaian,Bobot (%)
+"Hasil project/hasil studi kasus/hasil
+Problem Based Learning (PBL)",50
+Tugas/Kuis/Presentasi,10
+Ujian Tengah Semester (UTS),20
+Ujian Akhir Semester (UAS),20

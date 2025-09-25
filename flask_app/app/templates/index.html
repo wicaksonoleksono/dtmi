@@ -1,0 +1,273 @@
+{% extends 'base.html' %} {% block content %}
+<div class="flex-1 flex flex-col h-screen" x-data="chatApp()">
+  <!-- Messages Container -->
+  <div
+    class="flex-1 overflow-y-auto px-4 lg:px-8 py-6 lg:py-12 scroll-smooth"
+    x-ref="messagesContainer"
+    style="
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    "
+  >
+    {% include 'components/welcome_message.html' %}
+
+    <!-- Chat Messages -->
+    <div class="max-w-4xl mx-auto space-y-8">
+      <template x-for="message in messages" :key="message.id">
+        {% include 'components/message_item.html' %}
+      </template>
+    </div>
+  </div>
+
+  {% include 'components/chat_input.html' %}
+</div>
+
+<script>
+  // Main Chat Application Component
+  function chatApp() {
+    return {
+      nextId: 1,
+      messages: [],
+      currentMessage: '',
+      isLoading: false,
+
+      // Filters
+      selectedFilter: 'all',   // radio-bound: 'all'|'text'|'image'|'table'
+      selectedYear: 'SARJANA', // Default to SARJANA
+
+      filters: [
+        { value: 'all',  label: 'Semua', icon: '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/></svg>' },
+        { value: 'text', label: 'Teks',  icon: '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm0 2h12v10H4V5z"/><path d="M6 7h8v2H6V7zm0 4h8v2H6v-2z"/></svg>' },
+        { value: 'image',label: 'Gambar',icon: '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>' },
+        { value: 'table',label: 'Tabel', icon: '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 4a1 1 0 00-1 1v10a1 1 0 001 1h10a1 1 0 001-1V5a1 1 0 00-1-1H5zM4 2a3 3 0 00-3 3v10a3 3 0 003 3h10a3 3 0 003-3V5a3 3 0 00-3-3H4zm2 4h8v2H6V6zm0 4h8v2H6v-2z" clip-rule="evenodd"/></svg>' },
+      ],
+      yearFilters: [
+        { value: 'SARJANA', label: 'SARJANA (S1)' },
+        { value: 'MAGISTER', label: 'MAGISTER (S2)' },
+        { value: 'DOKTOR', label: 'DOKTOR (S3)' }
+      ],
+
+
+      init() {
+        this.$watch('messages', () => this.$nextTick(() => this.scrollToBottom()));
+      },
+
+
+      makeMessage(type, content = '', extras = {}) {
+        return {
+          id: this.nextId++,
+          type,
+          content,
+          timestamp: new Date().toISOString(),
+          streaming: type === 'bot',
+          csvTables: [],
+          processed_images: [],
+          references: [],
+          ...extras
+        };
+      },
+
+      handleKeydown(event) {
+        if (event.key === 'Enter') {
+          if (event.shiftKey) return true;
+          event.preventDefault();
+          this.sendMessage();
+        }
+      },
+
+      selectFilter(value) {
+        if (!this.isLoading) {
+          console.log('[FILTER DEBUG] Changing filter from', this.selectedFilter, 'to', value);
+          this.selectedFilter = value;
+        }
+      },
+      selectYear(value) {
+        if (!this.isLoading) {
+          console.log('[FILTER DEBUG] Changing year from', this.selectedYear, 'to', value);
+          this.selectedYear = value;
+        }
+      },
+
+      sendMessage() {
+        const text = this.currentMessage.trim();
+        if (!text) return;
+
+        // Sanitize user input to prevent XSS
+        const sanitizedText = DOMPurify.sanitize(text, {
+          ALLOWED_TAGS: [],
+          ALLOWED_ATTR: []
+        });
+
+        const userMsg = this.makeMessage('user', sanitizedText);
+        this.messages.push(userMsg);
+
+        const botMsg = this.makeMessage('bot');
+        this.messages.push(botMsg);
+
+        this.currentMessage = '';
+        this.isLoading = true;
+        this.scrollToBottom();
+        this.startStreaming(botMsg, sanitizedText);
+      },
+
+      startStreaming(msg, query) {
+        console.log('[STREAM DEBUG] Current filter state:', {
+          selectedFilter: this.selectedFilter,
+          selectedYear: this.selectedYear,
+          preparedQueryTypes: this.prepareQueryTypes()
+        });
+
+        const params = new URLSearchParams({
+          query,
+          query_types: this.prepareQueryTypes(), // 'all'|'text'|'image'|'table'
+          year: this.selectedYear
+        });
+
+        console.log('[STREAM DEBUG] Final params:', params.toString());
+
+        const es = new EventSource(`{{ url_for('stream.query') }}?${params}`, { withCredentials: false });
+
+        es.onmessage = e => {
+          const payload = JSON.parse(e.data);
+          const { type, data } = payload;
+
+          if (type === 'chunk') {
+            const i = this.messages.findIndex(m => m.id === msg.id);
+            if (i !== -1) {
+              const newContent = this.messages[i].content + data;
+              this.messages[i] = { ...this.messages[i], content: this.formatAnswer(newContent) };
+            }
+          } else if (type === 'metadata') {
+            const i = this.messages.findIndex(m => m.id === msg.id);
+            if (i !== -1) {
+              this.messages[i] = {
+                ...this.messages[i],
+                csvTables: data.csv_tables || [],
+                processed_images: data.processed_images || [],
+                references: data.references || []
+              };
+            }
+          } else if (type === 'stream_end') {
+            const i = this.messages.findIndex(m => m.id === msg.id);
+            if (i !== -1) this.messages[i] = { ...this.messages[i], streaming: false };
+            this.isLoading = false;
+            es.close();
+          }
+        };
+
+        es.onerror = () => {
+          const i = this.messages.findIndex(m => m.id === msg.id);
+          if (i !== -1) {
+            this.messages[i] = {
+              ...this.messages[i],
+              streaming: false,
+              content: `<span class="text-red-400">[SNAFU] Network error</span>`
+            };
+          }
+          this.isLoading = false;
+          es.close();
+        };
+      },
+
+      prepareQueryTypes() {
+        // Radio button selection - return single value
+        return this.selectedFilter || 'all';
+      },
+
+      processCsvTables(data, isOk) {
+        if (!isOk || !data.csv_tables || data.csv_tables.length === 0) return [];
+        return data.csv_tables.map(t => ({ ...t, loading: false }));
+      },
+      processReferences(data, isOk) {
+        if (!isOk || !data.references || data.references.length === 0) return [];
+        return data.references;
+      },
+      processImageData(data, isOk) {
+        if (!isOk) return [];
+        if (data.processed_images && data.processed_images.length > 0) {
+          return data.processed_images.map(img => ({
+            ...img,
+            data_url: img.data_url || img.path,
+            url: img.data_url || img.path
+          }));
+        } else if (data.image_paths && data.image_paths.length > 0) {
+          if (data.image_paths[0] && typeof data.image_paths[0] === 'object' && data.image_paths[0].path) {
+            return data.image_paths.map(img => ({
+              path: img.path,
+              caption: img.caption || '',
+              filename: img.filename || '',
+              data_url: img.path,
+              url: img.path
+            }));
+          } else if (Array.isArray(data.image_paths[0])) {
+            return data.image_paths.map(([path, caption]) => ({
+              path,
+              caption: caption || '',
+              filename: (path || '').split('/').pop() || path,
+              data_url: path,
+              url: path
+            }));
+          }
+        }
+        return [];
+      },
+
+      formatAnswer(answer) {
+        if (!answer) return 'Tidak ada respons yang diterima';
+        
+        // First sanitize the content to remove any dangerous HTML/JS
+        const sanitized = DOMPurify.sanitize(answer, {
+          ALLOWED_TAGS: ['br', 'strong', 'em', 'p', 'ul', 'ol', 'li'],
+          ALLOWED_ATTR: []
+        });
+        
+        // Then apply safe formatting
+        return sanitized.replace(/\n/g, '\n')
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em>$1</em>')
+          .replace(/\n/g, '<br>');
+      },
+
+      scrollToBottom() {
+        const c = this.$refs.messagesContainer;
+        if (c) c.scrollTo({ top: c.scrollHeight, behavior: 'smooth' });
+      },
+
+      adjustTextareaHeight() {
+        const t = this.$refs.messageTextarea;
+        if (!t) return;
+        t.style.height = 'auto';
+        t.style.height = Math.min(t.scrollHeight, 200) + 'px';
+      },
+
+      usePrompt(prompt) {
+        this.currentMessage = prompt.text;
+        this.sendMessage();
+      },
+
+      resetConversation() {
+        this.messages = [];
+        this.currentMessage = '';
+        this.isLoading = false;
+        this.nextId = 1;
+      }
+    }
+  }
+
+  // Prompt Manager Component
+  function promptManager() {
+    return {
+      prompts: [],
+      init() { this.loadPrompts(); },
+      loadPrompts() { this.prompts = {{ default_prompts | tojson | safe }}; },
+      usePrompt(prompt) {
+        const chatApp = Alpine.$data(document.querySelector('[x-data*="chatApp"]'));
+        if (chatApp) {
+          chatApp.currentMessage = prompt.text;
+          chatApp.sendMessage();
+        }
+      }
+    }
+  }
+</script>
+{% endblock %}

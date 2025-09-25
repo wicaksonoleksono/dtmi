@@ -1,0 +1,40 @@
+<!-- Status Info Component -->
+<div class="flex items-center justify-between mt-4 text-xs opacity-60">
+  <div class="flex items-center gap-4">
+    <span class="flex items-center gap-1">
+      <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+      Online
+    </span>
+    <span class="flex items-center gap-1">
+      <span
+        x-text="yearFilters.find(y => y.value === selectedYear)?.label || 'SARJANA'"
+      ></span>
+      <span>•</span>
+      <span
+        x-text="filters.find(f => f.value === selectedFilter)?.label || 'Semua'"
+      ></span>
+    </span>
+  </div>
+  <div x-show="isLoading" class="flex items-center gap-2">
+    <div class="flex space-x-1">
+      <div class="w-1 h-1 rounded-full bg-claude-primary animate-bounce"></div>
+      <div
+        class="w-1 h-1 rounded-full bg-claude-primary animate-bounce"
+        style="animation-delay: 0.1s"
+      ></div>
+      <div
+        class="w-1 h-1 rounded-full bg-claude-primary animate-bounce"
+        style="animation-delay: 0.2s"
+      ></div>
+    </div>
+    <span>Sedang memproses...</span>
+  </div>
+</div>
+
+<!-- Disclaimer -->
+<div class="mt-3 text-xs opacity-50 text-center">
+  <p>
+    Chatbot ini dapat memberikan informasi kurang akurat karena keterbatasan
+    teknologi AI dan potensi halusinasi.
+  </p>
+</div>

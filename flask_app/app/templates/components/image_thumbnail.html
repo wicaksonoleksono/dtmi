@@ -1,0 +1,135 @@
+<!-- Image Thumbnail Component -->
+<div class="group cursor-pointer" @click="selectedImage = image; showModal = true"
+     x-data="{
+         imageLoaded: false,
+         imageError: false,
+         imageStartedLoading: false,
+         initThumbnail(image, index) {
+             console.log('Initializing thumbnail', index, ':', image);
+             this.imageStartedLoading = true;
+             
+             // If the image has a backend error, immediately set imageError to true
+             if (image.error) {
+                 this.imageError = true;
+                 this.imageLoaded = false; // Ensure image is not shown
+                 return;
+             }
+
+             this.$nextTick(() => {
+                 const img = this.$el.querySelector('img');
+                 if (img) {
+                     if (img.complete && img.naturalHeight !== 0) {
+                         console.log('Image already cached:', index);
+                         this.imageLoaded = true;
+                         if (this.$parent && this.$parent.loadedImages) {
+                             this.$parent.loadedImages.add(index);
+                         }
+                     } else {
+                         img.loading = 'eager';
+                         console.log('Forcing eager load for:', index);
+                     }
+                 }
+             });
+         },
+         handleImageLoad() {
+             console.log('✅ Thumbnail loaded successfully'); 
+             this.imageLoaded = true; 
+             if (this.$parent && this.$parent.loadedImages) {
+                this.$parent.loadedImages.add(this.index);
+            }
+         },
+         handleImageError() {
+             console.error('❌ Failed to load thumbnail'); 
+             this.imageError = true;
+         }
+     }"
+     x-init="initThumbnail(image, index)">
+    <div class="relative overflow-hidden rounded-xl shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl">
+        <!-- Loading placeholder -->
+        <div x-show="!imageLoaded && !imageError && !image.error" 
+             class="w-full h-28 bg-gray-200 dark:bg-gray-700 flex items-center justify-center animate-pulse">
+            <svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+            </svg>
+        </div>
+        
+        <!-- Error placeholder -->
+        <div x-show="image.error || imageError" 
+             class="w-full h-28 bg-red-100 dark:bg-red-900 flex items-center justify-center">
+            <div class="text-center">
+                <svg class="w-6 h-6 text-red-400 mx-auto mb-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                <span class="text-xs text-red-600 dark:text-red-400">Error</span>
+                <div class="text-xs text-red-500 mt-1" x-text="image.error_message || 'Load failed'"></div>
+            </div>
+        </div>
+        
+        <!-- Actual image -->
+        <img x-show="imageLoaded && !image.error && !imageError"
+             :src="image.data_url || image.path || image.url" 
+             :alt="image.caption || image.filename" 
+             class="w-full h-28 object-cover transition-opacity duration-300"
+             loading="eager"
+             @load="handleImageLoad()"
+             @error="handleImageError()"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100">
+        
+        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div class="absolute bottom-2 left-2 right-2">
+                <p class="text-white text-xs font-medium truncate" 
+                   x-text="image.caption || image.filename"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function imageThumbnail() {
+    return {
+        imageLoaded: false,
+        imageError: false,
+        imageStartedLoading: false,
+
+        initThumbnail(image, index) {
+            console.log('Initializing thumbnail', index, ':', image);
+            this.imageStartedLoading = true;
+            
+            this.$nextTick(() => {
+                const img = this.$el.querySelector('img');
+                if (img) {
+                    if (img.complete && img.naturalHeight !== 0) {
+                        console.log('Image already cached:', index);
+                        this.imageLoaded = true;
+                        if (this.$parent && this.$parent.loadedImages) {
+                            if (this.$parent && this.$parent.loadedImages) {
+                             this.$parent.loadedImages.add(index);
+                         }
+                        }
+                    } else {
+                        img.loading = 'eager';
+                        console.log('Forcing eager load for:', index);
+                    }
+                }
+            });
+        },
+
+        handleImageLoad() {
+            console.log('✅ Thumbnail loaded successfully'); 
+            this.imageLoaded = true; 
+            if (this.$parent && this.$parent.loadedImages) {
+                if (this.$parent && this.$parent.loadedImages) {
+                this.$parent.loadedImages.add(this.index);
+            }
+            }
+        },
+
+        handleImageError() {
+            console.error('❌ Failed to load thumbnail'); 
+            this.imageError = true;
+        }
+    }
+}
+</script>

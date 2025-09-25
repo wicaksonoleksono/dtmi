@@ -1,0 +1,140 @@
+<!-- Enhanced Image Modal Component -->
+<div x-show="showModal" 
+     x-transition:enter="transition ease-out duration-300" 
+     x-transition:enter-start="opacity-0 scale-95" 
+     x-transition:enter-end="opacity-100 scale-100"
+     class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" 
+     @click.self="showModal = false"
+     @keydown.escape.window="showModal = false"
+     x-cloak>
+    
+    <div class="relative max-w-4xl max-h-[90vh] rounded-2xl overflow-hidden shadow-2xl"
+         :class="darkMode ? 'bg-claude-surface-dark' : 'bg-claude-surface'"
+         x-data="imageModal()"
+         x-init="$watch('selectedImage', image => {
+             if (image) {
+                 // If backend reports an error, immediately set modalImageError and don't attempt loading
+                 if (image.error) {
+                     this.modalImageLoaded = false;
+                     this.modalImageError = true;
+                 } else {
+                     // Otherwise, reset states and allow image to load
+                     this.modalImageLoaded = false;
+                     this.modalImageError = false;
+                 }
+             }
+         })">
+        
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between p-6 border-b" 
+             :class="darkMode ? 'border-claude-border-dark' : 'border-claude-border'">
+            <h3 class="text-lg font-semibold" x-text="selectedImage?.caption || selectedImage?.filename || 'Image'"></h3>
+            <button @click="showModal = false" 
+                    class="p-2 rounded-xl transition-colors hover:bg-gray-100 dark:hover:bg-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- Modal Content -->
+        <div class="p-6 max-h-[calc(90vh-10rem)] overflow-y-auto">
+            <div class="relative">
+                <!-- Backend error state -->
+                <div x-show="selectedImage?.error" 
+                     class="w-full h-64 bg-red-100 dark:bg-red-900 rounded-xl flex items-center justify-center">
+                    <div class="text-center">
+                        <svg class="w-12 h-12 text-red-400 mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                        <span class="text-red-600 dark:text-red-400 mb-2 block">Failed to load image</span>
+                        <span class="text-sm text-red-500" x-text="selectedImage?.error_message || 'Unknown error'"></span>
+                    </div>
+                </div>
+
+                <!-- Loading state -->
+                <div x-show="!modalImageLoaded && !modalImageError && !selectedImage?.error" 
+                     class="w-full h-64 bg-gray-200 dark:bg-gray-700 rounded-xl flex items-center justify-center animate-pulse">
+                    <div class="text-center">
+                        <div class="w-12 h-12 border-4 border-claude-orange border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                        <span class="text-sm opacity-70">Memuat gambar...</span>
+                    </div>
+                </div>
+                
+                <!-- Error state -->
+                <div x-show="modalImageError && !selectedImage?.error" 
+                     class="w-full h-64 bg-red-100 dark:bg-red-900 rounded-xl flex items-center justify-center">
+                    <div class="text-center">
+                        <svg class="w-12 h-12 text-red-400 mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                        <span class="text-red-600 dark:text-red-400">Failed to load image</span>
+                    </div>
+                </div>
+                
+                <!-- Actual modal image -->
+                <img x-show="modalImageLoaded && !selectedImage?.error"
+                     :src="selectedImage?.data_url || selectedImage?.path || selectedImage?.url" 
+                     :alt="selectedImage?.caption || selectedImage?.filename" 
+                     class="w-full h-auto rounded-xl shadow-lg transition-opacity duration-300"
+                     @load="modalImageLoaded = true"
+                     @error="modalImageError = true"
+                     x-transition:enter="transition ease-out duration-300"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100">
+            </div>
+            
+            <!-- Image Info -->
+            <div x-show="selectedImage && !selectedImage?.error" class="mt-6 space-y-4">
+                <!-- Caption -->
+                <div x-show="selectedImage?.caption" class="p-4 rounded-xl" 
+                     :class="darkMode ? 'bg-claude-bg-dark' : 'bg-claude-bg'">
+                    <h4 class="font-medium mb-2">Caption:</h4>
+                    <p class="text-sm opacity-80 leading-relaxed" x-text="selectedImage?.caption"></p>
+                </div>
+                
+                <!-- File info -->
+                <div class="p-4 rounded-xl" 
+                     :class="darkMode ? 'bg-claude-bg-dark' : 'bg-claude-bg'">
+                    <h4 class="font-medium mb-2">File Info:</h4>
+                    <div class="text-sm opacity-80 space-y-1">
+                        <p><strong>Filename:</strong> <span x-text="selectedImage?.filename"></span></p>
+                        <p x-show="selectedImage?.size"><strong>Size:</strong> <span x-text="$parent.formatFileSize(selectedImage?.size)"></span></p>
+                        <p x-show="selectedImage?.mime_type"><strong>Type:</strong> <span x-text="selectedImage?.mime_type"></span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Error details -->
+            <div x-show="selectedImage?.error" class="mt-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20">
+                <h4 class="font-medium mb-2 text-red-700 dark:text-red-400">Error Details:</h4>
+                <p class="text-sm text-red-600 dark:text-red-400" x-text="selectedImage?.error_message || 'Unknown error occurred'"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function imageModal() {
+    return {
+        modalImageLoaded: false, // Initialize to false so loading state shows first
+        modalImageError: false,
+
+        init() {
+            this.$watch('selectedImage', image => {
+                if (image) {
+                    // If backend reports an error, immediately set modalImageError and don't attempt loading
+                    if (image.error) {
+                        this.modalImageLoaded = false;
+                        this.modalImageError = true;
+                    } else {
+                        // Otherwise, reset states and allow image to load
+                        this.modalImageLoaded = false;
+                        this.modalImageError = false;
+                    }
+                }
+            });
+        }
+    }
+}
+</script>

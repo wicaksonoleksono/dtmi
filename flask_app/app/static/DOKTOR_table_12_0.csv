@@ -1,0 +1,15 @@
+Nilai Angka,Nilai Huruf
+Nilai ≥85,A
+80 ≤Nilai < 85,A-
+75 ≤Nilai < 80,A/B
+70 ≤Nilai < 75,B+
+65 ≤Nilai < 70,B
+60 ≤Nilai < 65,B-
+55 ≤Nilai < 60,B/C
+50 ≤Nilai < 55,C+
+45 ≤Nilai < 50,C
+"41,25 ≤Nilai < 45",C-
+"37,5 ≤Nilai < 41,25",C/D
+"33,75 ≤Nilai < 37,5",D+
+"30 ≤Nilai < 33,75",D
+Nilai < 30,E

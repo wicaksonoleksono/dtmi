@@ -1,0 +1,8 @@
+<!-- Background Gradient Animation -->
+<div class="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+    <div class="absolute -top-40 -right-40 w-80 h-80 rounded-full opacity-10 animate-pulse-gentle"
+         :class="darkMode ? 'bg-claude-primary-dark' : 'bg-claude-primary'"></div>
+    <div class="absolute -bottom-40 -left-40 w-80 h-80 rounded-full opacity-10 animate-pulse-gentle"
+         :class="darkMode ? 'bg-claude-accent-dark' : 'bg-claude-accent'"
+         style="animation-delay: 1s"></div>
+</div>

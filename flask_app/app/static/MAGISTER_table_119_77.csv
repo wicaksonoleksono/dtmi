@@ -1,0 +1,33 @@
+No,Sifat,Nama Mata Kuliah,Kode,SKS
+37.,MKP,"Komputasi Dinamika Fluida
+(Computational Fluid Dynamics)",TKM2572105,3
+"Deskripsi Mata Kuliah (Course Description):
+Matakuliah ini berfokus tentang penggunaan aljabar dan kalkulus untuk
+menyelesaikan persamaan yang berkaitan dengan mekanika fluida secara numerikal.
+Tujuan Pembelajaran (Course Objective):
+Tujuan utama pembelajaran matakuliah ini adalah: mengerti persamaan atur dan
+penurunannya, mengerti metode diskretisasi ruang, mengerti diskretisasi waktu:
+eksplisit, implisit, crank-nicolson, syarat awal & batas, memahami komputasi aliran
+konveksi, metode diskretisasi suku konveksi, model turbulen dan metode visualisasi
+secara numerik.
+Capaian Pembelajaran Lulusan (CPL) atau Student Outcomes (SO): A1, A2, dan A3
+Materi Pembelajaran (Outline Syllabus):
+● Persamaan Atur dan Penurunannya,
+● Metode diskretisasi ruang: FDM; FVM; FEM,
+● Metode diskretisasi waktu: eksplisit, implisit, crank-nicolson,
+● Syarat awal & batas,
+● Metode penyelesaian persamaan aljabar (TDMA, Gauss-Seidel, L-by-L),
+● Dasar komputasi model eliptik, parabolik, hiperbolik,
+● Komputasi aliran konveksi (metode vorticity- stream, MAC, SIMPLE),
+● Metode diskretisasi konveksi (metode upwind, hybrid, power law, QUICK,
+QUICKER, QUICKEST, dll.),
+● Model turbulen (Reynolds-Averaged Model, RSM, LES),
+● Metode visualisasi secara numerik.
+Metode Pembelajaran SCL yang dipilih (Methods of Delivery):
+Case based learning, Experimental, Classical
+Metode Penilaian (Assessment Methods):
+Tugas, Quiz, Project, UTS, UAS, Project.
+Referensi (Reference):
+1) Dale A. Anderson (2020). Computational Fluid Mechanics and Heat
+Transfer, CRC Press.
+2) Versteeg, H. and Malalasekra, W. (2007). An Introduction to Computational",,,,

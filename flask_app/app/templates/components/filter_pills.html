@@ -1,0 +1,12 @@
+<!-- Type Filter using reusable component -->
+<div 
+  x-data="{ 
+    filterLabel: 'Sumber data:', 
+    filterOptions: filters, 
+    get selectedValue() { return selectedFilter },
+    selectValue(value) { selectFilter(value) },
+    justifyClass: 'justify-left'
+  }"
+>
+  {% include 'components/radio_filter.html' %}
+</div>

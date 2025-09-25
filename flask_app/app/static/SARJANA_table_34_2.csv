@@ -1,0 +1,5 @@
+IP SEMESTER,Maksimum SKS yang diambil
+"IP < 2,00",12
+"2,00 ≤IP < 2,49",15
+"2,50 ≤IP < 3,00",20
+"IP ≥3,00",24

@@ -1,0 +1,11 @@
+<!-- Year Filter using reusable component -->
+<div
+  x-data="{ 
+    filterLabel: 'Jenjang:', 
+    filterOptions: yearFilters, 
+    get selectedValue() { return selectedYear },
+    selectValue(value) { selectYear(value) }
+  }"
+>
+  {% include 'components/radio_filter.html' %}
+</div>
