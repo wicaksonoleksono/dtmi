@@ -26,25 +26,13 @@ def get_msg_hist(session_id: str) -> List[str]:
         history = get_history(session_id)
         if not history.messages:
             return []
-        max_exchanges = current_app.config['MEMORY_EXCHANGES']  # Number of exchanges to consider
-        # Include human messages and any AI-type messages (including chunks)
-        conversation_messages = []
-        for msg in history.messages:
-            if hasattr(msg, 'type'):
-                if msg.type == 'human':
-                    conversation_messages.append(msg)
-                elif msg.type in ['ai'] or 'ai' in msg.type.lower():
-                    conversation_messages.append(msg)
-        if not conversation_messages:
-            return []
-        recent_messages = conversation_messages[-(max_exchanges * 2):]
+        # InMemoryHistory already handles MEMORY_EXCHANGES trimming, so just format messages
         conversation_context = []
-        for msg in recent_messages:
+        for msg in history.messages:
             if hasattr(msg, 'type') and hasattr(msg, 'content'):
                 if msg.type == 'human':
                     conversation_context.append(f"Human: {msg.content}")
                 elif msg.type == 'ai' or 'ai' in msg.type.lower():
-                    # Treat all AI-type messages (ai, AIChunk, etc.) as AI responses
                     conversation_context.append(f"AI: {msg.content}")
         return conversation_context
     except Exception as e:
@@ -99,13 +87,9 @@ def query():
     - Data umum yang berkaitan dengan jogjakarta dan UGM
     - IP INDEKS PRESTASI DAN IPK (INDESK PRESTASI KUMULATIF)
     PADA DTMI UGM Departemen Teknik Mesin dan Teknik Industri
-    TI : Teknik Industri
-    TM : Teknik Mesin
-    BERAPA MATKUL :  SKS
-    Aturan kuota SKS (angkatan 2024) berdasarkan IP semester: Pertanyaan terkait (IPK dan "berapa matkul/sks yang dapat diambil/dilaksanakan")
-    prof: professor
-    tendik : tenaga pendidik
-  
+    SINGKATAN:
+TI → Teknik Industri, TM → Teknik Mesin, matkul → mata kuliah (clarify SKS?), prof → professor, tendik → tenaga pendidikan
+
     """
 
     def generate_stream():
@@ -134,9 +118,9 @@ def query():
                     from ..service.chat_history import get_history
                     history = get_history(g.session_id)
                     print(f"[CONTEXT DEBUG] Full history pattern:")
-                    for i, msg in enumerate(history.messages, 1):
+                    for i, msg in enumerate(history.messages[:40], 1):
                         msg_type = type(msg).__name__.replace('Message', '')
-                        content_preview = str(msg.content)[:50].replace('\n', ' ')
+                        content_preview = str(msg.content).replace('\n', ' ')
                         print(f"[CONTEXT DEBUG]   {i}. {msg_type}: {content_preview}...")
                 except Exception as e:
                     print(f"[CONTEXT DEBUG] Error showing history: {e}")
@@ -144,31 +128,33 @@ def query():
                     router.get_action(query, previous_conversation)
                 )
                 print(f"[ROUTER DEBUG] Action: {router_result['action']}")
-                print(f"[ROUTER DEBUG] Expanded: '{router_result['expanded_query']}'")
-                print(f"[ROUTER DEBUG] Optimized: '{router_result['rag_optimized_query']}'")
-                if router_result.get('clarification_needed'):
-                    print(f"[ROUTER DEBUG] Clarification: '{router_result['clarification_needed']}'")
+                if router_result['action'] == 'rag':
+                    print(f"[ROUTER DEBUG] Expanded: '{router_result['expanded_query']}'")
+                    print(f"[ROUTER DEBUG] Optimized: '{router_result['rag_optimized_query']}'")
+                else:
+                    print(f"[ROUTER DEBUG] Response: '{router_result['response']}'")
+                    if router_result.get('what_to_clarify'):
+                        print(f"[ROUTER DEBUG] Clarification type: '{router_result['what_to_clarify']}'")
 
-                # Step 3A: Clarification path
-                if router_result['action'] == 'clarify':
-                    yield 'data: {"type":"stream_start"}\n\n'
-                    clarification_msg = router_result['clarification_needed']
-                    yield f'data: {json.dumps({"type":"chunk","data":clarification_msg})}\n\n'
-                    yield 'data: {"type":"stream_end"}\n\n'
-                    return
-
-                # Step 3B: Direct path - non-RAG streaming
-                elif router_result['action'] == 'direct':
-                    # Manually add original query to history before sending expanded version
+                # Step 3A: No-RAG path (direct/clarification)
+                if router_result['action'] == 'no_rag':
+                    # Store original query in history before response
                     from langchain_core.messages import HumanMessage
                     from ..service.chat_history import get_history
                     history = get_history(g.session_id)
                     original_message = HumanMessage(content=query)  # Store original user input
                     history.add_messages([original_message])
                     
+                    # Build no-rag prompt using PromptService (SOC compliance)
+                    no_rag_prompt = loop.run_until_complete(
+                        prompt_service.build_no_rag_prompt(
+                            response=router_result['response'],
+                            what_to_clarify=router_result.get('what_to_clarify')
+                        )
+                    )
+                    
                     yield 'data: {"type":"stream_start"}\n\n'
-                    stream_gen = stream_handler.stream_from_prompt(
-                        router_result['expanded_query'], session_id=g.session_id)
+                    stream_gen = stream_handler.stream_from_prompt(no_rag_prompt, session_id=g.session_id)
                     while True:
                         try:
                             chunk = loop.run_until_complete(stream_gen.__anext__())
@@ -179,7 +165,7 @@ def query():
                     yield 'data: {"type":"stream_end"}\n\n'
                     return
 
-                # Step 3C: RAG path - use optimized query for search, expanded for prompt
+                # Step 3B: RAG path - use optimized query for search, expanded for prompt
                 yield 'data: {"type":"status","message":"Fetching relevant information..."}\n\n'
                 yield f'data: {json.dumps({"type":"status","message":"filters", "data": {"query_types": query_types, "year": year, "top_k": top_k, "cew": context_expansion_window}})}\n\n'
 

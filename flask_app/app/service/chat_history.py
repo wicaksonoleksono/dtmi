@@ -20,16 +20,22 @@ class InMemoryHistory(BaseChatMessageHistory, BaseModel):
         processed_messages = []
         for msg in messages:
             if isinstance(msg, HumanMessage):
-                # Extract the query from ${query}$ format if present
+                # original_content = msg.content
                 cleaned_content = self._extract_query_from_human_message(msg.content)
                 processed_messages.append(HumanMessage(content=cleaned_content))
             else:
-                # Preserve AI messages and other message types as-is
                 processed_messages.append(msg)
                 
         self.messages.extend(processed_messages)
         # Trim after every write
         self._trim_to_last_n_exchanges()
+        
+        # Debug: Print final saved messages
+        print(f"[DEBUG] Total messages in history: {len(self.messages)}")
+        for i, msg in enumerate(self.messages):
+            msg_type = type(msg).__name__
+            content_preview = msg.content[:50] if hasattr(msg, 'content') else str(msg)[:50]
+            print(f"[DEBUG] Message {i}: {msg_type} - {content_preview}...")
 
     def clear(self) -> None:
         self.messages = []
@@ -50,7 +56,7 @@ class InMemoryHistory(BaseChatMessageHistory, BaseModel):
         """
         # Look for the pattern ${...}$ (query wrapped with $)
         # Note: We're looking for the specific format used in build_rag_prompt: Query: ${query}$
-        pattern = r"Query:\$(.*?)\$"
+        pattern = r"\$(.*?)\$"
         match = re.search(pattern, content)
         if match:
             # Return just the query part extracted from the ${query}$ format

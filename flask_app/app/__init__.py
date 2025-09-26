@@ -54,7 +54,6 @@ def create_app() -> Flask:
     missing = [k for k in required if not app.config.get(k)]
     if missing:
         raise ValueError(f"Missing required config keys: {', '.join(missing)}")
-
     # LLMs
     STREAM_SYSTEM_PREPROMPT = SystemMessage(content="""
     Kamu adalah **Tasya** alias Tanya Saya  asisten milik DTMI UGM 
@@ -78,6 +77,7 @@ def create_app() -> Flask:
     5. PENTING: Jika tidak ada konteks yang relevan, jangan menggunakan general knowledge, cukup jawab:
     "Mohon maaf, data tidak ditemukan. Silakan hubungi administrasi DTMI UGM 🙏"
     6. Gunakan format yang baik dan tepat
+    
     
     """)
 
