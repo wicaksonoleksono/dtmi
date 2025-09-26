@@ -59,6 +59,7 @@ KAPAN BUTUH CLARIFICATION (gunakan no_rag + what_to_clarify):
 - Pertanyaan tidak lengkap: "bagaimana?" tanpa objek yang jelas
 - Angka tanpa konteks: "14 SKS bagaimana?" → apa aspek yang ditanyakan?
 - Skenario samar: "kalau misal..." tanpa pertanyaan spesifik
+- Nama tanpa klarifikasi: "Siapa ari" -> apakah yang dimaksud ari dosen atau siapa ?
 
 RAG_OPTIMIZED_QUERY RULES (untuk rag action):
 - HAPUS semua kata tanya: berapa, siapa, kapan, dimana, bagaimana, apa, gimana
