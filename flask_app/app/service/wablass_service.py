@@ -1,12 +1,13 @@
 # app/service/wablass_service.py
 
 import asyncio
-from typing import Dict, Any
+from typing import Dict, Any, List
 from langchain_core.messages import HumanMessage
 
 from .filter_service import FilterService
 from .router_service import RouterAgent
 from .prompt_service import PromptService
+from .chat_history import get_history
 
 
 class WablassService:
@@ -17,6 +18,30 @@ class WablassService:
         self.vectorstore = vectorstore
         self.llm = llm
         self.wablass_agent = wablass_agent
+
+    def get_msg_hist(self, session_id: str) -> List[str]:
+        """
+        Get conversation context from the last N exchanges (human-AI pairs) for continuation detection
+        Returns both human and AI messages in conversation order
+        """
+        if not session_id:
+            return []
+        try:
+            history = get_history(session_id)
+            if not history.messages:
+                return []
+            # InMemoryHistory already handles MEMORY_EXCHANGES trimming, so just format messages
+            conversation_context = []
+            for msg in history.messages:
+                if hasattr(msg, 'type') and hasattr(msg, 'content'):
+                    if msg.type == 'human':
+                        conversation_context.append(f"Human: {msg.content}")
+                    elif msg.type == 'ai' or 'ai' in msg.type.lower():
+                        conversation_context.append(f"AI: {msg.content}")
+            return conversation_context
+        except Exception as e:
+            print(f"[WABLASS CONTEXT ERROR] Failed to get conversation context: {e}")
+            return []
 
     async def generate_answer(
         self,
@@ -58,11 +83,17 @@ class WablassService:
         prompt_service = PromptService(DTMI_DOMAIN)
 
         try:
-            # Step 1: Routing decision (no previous messages for WhatsApp)
-            router_result = await router.get_action(query, [])
+            # Step 1: Routing decision with conversation context
+            previous_conversation = self.get_msg_hist(session_id)
+            router_result = await router.get_action(query, previous_conversation)
 
             # Step 2A: No-RAG path (direct/clarification)
             if router_result['action'] == 'no_rag':
+                # Add original query to history before processing
+                history = get_history(session_id)
+                original_message = HumanMessage(content=query)
+                history.add_messages([original_message])
+                
                 if router_result.get('what_to_clarify'):
                     # Clarification case - return directly without LLM processing
                     return {
@@ -73,8 +104,11 @@ class WablassService:
                         'sources': []
                     }
                 else:
-                    # Direct response case - process through LLM
-                    response = await self.wablass_agent.ainvoke([HumanMessage(content=router_result['response'])])
+                    # Direct response case - process through LLM with session_id
+                    response = await self.wablass_agent.ainvoke(
+                        [HumanMessage(content=router_result['response'])],
+                        config={"configurable": {"session_id": session_id}}
+                    )
                     return {
                         'answer': response.content,
                         'used_rag': False,
@@ -96,7 +130,15 @@ class WablassService:
                 retrieved_content=rag_result['context']
             )
 
-            response = await self.wablass_agent.ainvoke([HumanMessage(content=rag_prompt)])
+            # Add original query to history before processing
+            history = get_history(session_id)
+            original_message = HumanMessage(content=query)
+            history.add_messages([original_message])
+
+            response = await self.wablass_agent.ainvoke(
+                [HumanMessage(content=rag_prompt)],
+                config={"configurable": {"session_id": session_id}}
+            )
 
             return {
                 'answer': response.content,

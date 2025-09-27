@@ -121,8 +121,11 @@ def create_app() -> Flask:
         get_session_history=get_history,
     )
 
-    # WhatsApp agent - NO HISTORY
-    app.wablass_agent = app.wablass_llm
+    # WhatsApp agent - WITH HISTORY
+    app.wablass_agent = RunnableWithMessageHistory(
+        runnable=app.wablass_llm,
+        get_session_history=get_history,
+    )
 
     # Embeddings + Vector DB
     app.emb_model = OpenAIEmbeddings(
