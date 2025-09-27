@@ -62,6 +62,8 @@ KAPAN BUTUH CLARIFICATION (gunakan no_rag + what_to_clarify):
 - Nama tanpa klarifikasi: "Siapa ari" -> apakah yang dimaksud ari dosen atau siapa ?
 - Klarifikasi untuk menentukan apakah yang dimaksud spesifik terhadap ti atau tm atau dtmi atau secara general 
 - Pertanyaan secara gramatik tidak jelas 
+Kapan butuh no_rag tanpa clarification: 
+- Jika bisa dijawab berdasarkan konteks history atau bedasarkan general knowledge.. 
 RAG_OPTIMIZED_QUERY RULES (untuk rag action):
 - HAPUS semua kata tanya: berapa, siapa, kapan, dimana, bagaimana, apa, gimana
 - HAPUS stop words: yang, adalah, untuk, dengan, dari, ke, di, dalam, bisa, dapat
@@ -88,22 +90,19 @@ Output: {{
 
 Input: "Halo, apa kabar?"
 Output: {{
-  "action": "no_rag",
-  "response": "Halo! Saya Tasya, asisten DTMI UGM. Apa yang bisa saya bantu?"
+  "action": "no_rag"
 }}
 
 Input: "kalo sy punya ipk 2.5 matkul yang sy bs ambil brapa?"
 Output: {{
   "action": "no_rag",
-  "response": "Apakah yang dimaksud adalah SKS (Sistem Kredit Semester) yang bisa diambil dengan IPK 2.5?",
-  "what_to_clarify": "user_intent"
+  "what_to_clarify": "Apakah yang dimaksud adalah SKS (Sistem Kredit Semester) yang bisa diambil dengan IPK 2.5?"
 }}
 
 Input: "kalau misal saya mengambil 14 SKS bagaimana?"
 Output: {{
   "action": "no_rag",
-  "response": "Untuk 14 SKS, apa yang ingin Anda ketahui? Apakah tentang minimum IPK yang diperlukan, dampak terhadap beban studi, atau aspek lainnya?",
-  "what_to_clarify": "specific_aspect"
+  "what_to_clarify": "Untuk 14 SKS, apa yang ingin Anda ketahui? Apakah tentang minimum IPK yang diperlukan, dampak terhadap beban studi, atau aspek lainnya?"
 }}
 
 ** STRICT RULES **
@@ -137,7 +136,6 @@ FORMAT RESPONSE: JSON ketat
             else:  # no_rag action
                 return {
                     "action": "no_rag",
-                    "response": result.get("response", query),
                     "what_to_clarify": result.get("what_to_clarify", None)
                 }
 

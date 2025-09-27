@@ -122,7 +122,7 @@ def query():
                     history.add_messages([original_message])
                     no_rag_prompt = loop.run_until_complete(
                         prompt_service.build_no_rag_prompt(
-                            response=router_result['response'],
+                            original_query=query,
                             what_to_clarify=router_result.get('what_to_clarify')
                         )
                     )

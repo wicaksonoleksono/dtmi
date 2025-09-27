@@ -39,23 +39,21 @@ Query: ${query}$
 """
 
     @handle_service_errors(service_name="PromptService")
-    @validate_inputs(required_params=['response'])
+    @validate_inputs(required_params=['original_query'])
     async def build_no_rag_prompt(
         self,
-        response: str,
+        original_query: str,
         what_to_clarify: str = None,
     ) -> str:
-        # If clarification needed, wrap with $$ so LLM knows it's asking clarification
+        # If clarification needed, create clarification prompt
         if what_to_clarify:
-            return f"""Query: ${response}$
-Ini adalah permintaan klarifikasi untuk membantu user memperjelas maksud mereka.
-apa yang perlu di klarifikasi: {what_to_clarify if what_to_clarify else "tidak ada yang perlu diklarifikasi"}
-Berikan respons klarifikasi yang ramah dan membantu sesuai yang diminta.
-jika tidak terdapat klarifikasi maka dapat langsung dijawab
-"""
+            return f"""Pengguna menanyakan: {original_query}
+Hal yang perlu di klarifikasi: {what_to_clarify}
+
+Berikan respons klarifikasi yang ramah dan membantu."""
         
-        # For direct responses, return without $$ wrapper (stored as-is in history)
-        return response
+        # For general knowledge, just return original query
+        return original_query
 
     @handle_service_errors(service_name="PromptService")
     @validate_inputs(required_params=['query'])

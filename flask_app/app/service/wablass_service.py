@@ -94,26 +94,24 @@ class WablassService:
                 original_message = HumanMessage(content=query)
                 history.add_messages([original_message])
                 
-                if router_result.get('what_to_clarify'):
-                    # Clarification case - return directly without LLM processing
-                    return {
-                        'answer': router_result['response'],
-                        'used_rag': False,
-                        'context': '',
-                        'filter_message': f'Clarification needed: {router_result["what_to_clarify"]}',
-                        'sources': []
-                    }
-                else:
-                    # Direct response case - process through LLM with session_id
-                    response = await self.wablass_agent.ainvoke(
-                        router_result['response'],
-                        config={"configurable": {"session_id": session_id}}
-                    )
-                    return {
-                        'answer': response.content,
-                        'used_rag': False,
-                        'filter_message': 'Direct response (no RAG)'
-                    }
+                # Build prompt using PromptService
+                no_rag_prompt = await prompt_service.build_no_rag_prompt(
+                    original_query=query,
+                    what_to_clarify=router_result.get('what_to_clarify')
+                )
+                
+                # Process through LLM with session_id
+                response = await self.wablass_agent.ainvoke(
+                    no_rag_prompt,
+                    config={"configurable": {"session_id": session_id}}
+                )
+                
+                clarification_status = "Clarification provided" if router_result.get('what_to_clarify') else "General knowledge"
+                return {
+                    'answer': response.content,
+                    'used_rag': False,
+                    'filter_message': clarification_status
+                }
 
             # Step 2B: RAG path
             rag_result = await filter_service.get_rag(
