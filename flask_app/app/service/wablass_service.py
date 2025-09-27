@@ -61,37 +61,38 @@ class WablassService:
             # Step 1: Routing decision (no previous messages for WhatsApp)
             router_result = await router.get_action(query, [])
 
-            # Step 2A: Clarification path
-            if router_result['action'] == 'clarify':
-                return {
-                    'answer': router_result['clarification_needed'],
-                    'used_rag': False,
-                    'context': '',
-                    'filter_message': 'Clarification needed',
-                    'sources': []
-                }
+            # Step 2A: No-RAG path (direct/clarification)
+            if router_result['action'] == 'no_rag':
+                if router_result.get('what_to_clarify'):
+                    # Clarification case - return directly without LLM processing
+                    return {
+                        'answer': router_result['response'],
+                        'used_rag': False,
+                        'context': '',
+                        'filter_message': f'Clarification needed: {router_result["what_to_clarify"]}',
+                        'sources': []
+                    }
+                else:
+                    # Direct response case - process through LLM
+                    response = await self.wablass_agent.ainvoke([HumanMessage(content=router_result['response'])])
+                    return {
+                        'answer': response.content,
+                        'used_rag': False,
+                        'filter_message': 'Direct response (no RAG)'
+                    }
 
-            # Step 2B: Direct path - non-RAG generation
-            elif router_result['action'] == 'direct':
-                raw_prompt = router_result['expanded_query']
-                response = await self.wablass_agent.ainvoke([HumanMessage(content=raw_prompt)])
-                return {
-                    'answer': response.content,
-                    'used_rag': False,
-                    'filter_message': 'No RAG used'
-                }
-            # Step 2C: RAG path
+            # Step 2B: RAG path
             rag_result = await filter_service.get_rag(
-                query=router_result['expanded_query'],
+                query=router_result['rag_optimized_query'],  # Use optimized keywords for search
                 query_types=query_types,
                 year=year,
                 top_k=top_k,
                 context_expansion_window=context_expansion_window,
-                relevance_query=router_result['expanded_query']
+                relevance_query=router_result['expanded_query']  # Use full question for relevance
             )
 
             rag_prompt = await prompt_service.build_rag_prompt(
-                query=router_result['expanded_query'],
+                query=router_result['expanded_query'],  # Use full question for prompt
                 retrieved_content=rag_result['context']
             )
 

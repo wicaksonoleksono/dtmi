@@ -86,9 +86,8 @@ def query():
     - Kegiatan akademik
     - Data umum yang berkaitan dengan jogjakarta dan UGM
     - IP INDEKS PRESTASI DAN IPK (INDESK PRESTASI KUMULATIF)
+    - BEASISWA
     PADA DTMI UGM Departemen Teknik Mesin dan Teknik Industri
-    SINGKATAN:
-TI → Teknik Industri, TM → Teknik Mesin, matkul → mata kuliah (clarify SKS?), prof → professor, tendik → tenaga pendidikan
 
     """
 
@@ -102,7 +101,7 @@ TI → Teknik Industri, TM → Teknik Mesin, matkul → mata kuliah (clarify SKS
                 vectorstore=current_app.vector_db,
                 llm=current_app.agent,
                 context_expansion_window=context_expansion_window,
-                max_workers=13
+                max_workers=15
             )
             stream_handler = StreamHandler(current_app.stream_agent)
             metadata_service = MetadataService()
@@ -111,41 +110,16 @@ TI → Teknik Industri, TM → Teknik Mesin, matkul → mata kuliah (clarify SKS
             asyncio.set_event_loop(loop)
             try:
                 previous_conversation = get_msg_hist(g.session_id)
-                print(f"[CONTEXT DEBUG] Retrieved {len(previous_conversation)} conversation messages")
-                
-                # Debug: Show full message history pattern
-                try:
-                    from ..service.chat_history import get_history
-                    history = get_history(g.session_id)
-                    print(f"[CONTEXT DEBUG] Full history pattern:")
-                    for i, msg in enumerate(history.messages[:40], 1):
-                        msg_type = type(msg).__name__.replace('Message', '')
-                        content_preview = str(msg.content).replace('\n', ' ')
-                        print(f"[CONTEXT DEBUG]   {i}. {msg_type}: {content_preview}...")
-                except Exception as e:
-                    print(f"[CONTEXT DEBUG] Error showing history: {e}")
                 router_result = loop.run_until_complete(
                     router.get_action(query, previous_conversation)
                 )
                 print(f"[ROUTER DEBUG] Action: {router_result['action']}")
-                if router_result['action'] == 'rag':
-                    print(f"[ROUTER DEBUG] Expanded: '{router_result['expanded_query']}'")
-                    print(f"[ROUTER DEBUG] Optimized: '{router_result['rag_optimized_query']}'")
-                else:
-                    print(f"[ROUTER DEBUG] Response: '{router_result['response']}'")
-                    if router_result.get('what_to_clarify'):
-                        print(f"[ROUTER DEBUG] Clarification type: '{router_result['what_to_clarify']}'")
-
-                # Step 3A: No-RAG path (direct/clarification)
                 if router_result['action'] == 'no_rag':
-                    # Store original query in history before response
                     from langchain_core.messages import HumanMessage
                     from ..service.chat_history import get_history
                     history = get_history(g.session_id)
                     original_message = HumanMessage(content=query)  # Store original user input
                     history.add_messages([original_message])
-                    
-                    # Build no-rag prompt using PromptService (SOC compliance)
                     no_rag_prompt = loop.run_until_complete(
                         prompt_service.build_no_rag_prompt(
                             response=router_result['response'],

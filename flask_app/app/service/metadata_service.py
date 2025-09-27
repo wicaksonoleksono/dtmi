@@ -17,12 +17,18 @@ from ..decorators import handle_service_errors, ok, bad
 
 
 class MetadataService:
-    """Service for handling metadata processing asynchronously"""
+    """Service for handling metadata processing asynchronously with smart cleanup"""
 
     def __init__(self):
         self.task_storage: Dict[str, MetadataLoadingTask] = {}
         self.result_storage: Dict[str, MetadataResponse] = {}
-        self.thread_pool = ThreadPoolExecutor(max_workers=8)
+        self.thread_pool = ThreadPoolExecutor(max_workers=4)  # Reduced workers
+        
+        # Smart cleanup settings
+        self.max_memory_mb = 20  # Per-instance memory limit
+        self.auto_cleanup_seconds = 30  # Auto-cleanup after 30 seconds
+        self.cleanup_tasks: Dict[str, asyncio.Task] = {}
+        self.current_memory_usage = 0
 
     def prepare_metadata_from_rag(
         self,
@@ -120,6 +126,11 @@ class MetadataService:
             )
             self.result_storage[task_id] = response
             task.status = "completed"
+            
+            # Track memory usage and start auto-cleanup timer
+            self._update_memory_usage(response)
+            self._schedule_auto_cleanup(task_id)
+            
             ok(f"Completed metadata processing for task {task_id} in {processing_time:.2f}s")
             return response
         except Exception as e:
@@ -255,10 +266,69 @@ class MetadataService:
         return self.result_storage.get(task_id)
 
     def cleanup_task(self, task_id: str):
-        """Clean up completed task"""
+        """Clean up completed task with memory release"""
+        # Cancel auto-cleanup timer if exists
+        if task_id in self.cleanup_tasks:
+            self.cleanup_tasks[task_id].cancel()
+            del self.cleanup_tasks[task_id]
+        
+        # Release memory from result before deletion
+        if task_id in self.result_storage:
+            result = self.result_storage[task_id]
+            self._release_memory(result)
+        
         self.task_storage.pop(task_id, None)
         self.result_storage.pop(task_id, None)
         ok(f"Cleaned up task: {task_id}")
+
+    def _schedule_auto_cleanup(self, task_id: str):
+        """Schedule automatic cleanup for a task"""
+        async def auto_cleanup():
+            await asyncio.sleep(self.auto_cleanup_seconds)
+            if task_id in self.result_storage:
+                self.cleanup_task(task_id)
+                ok(f"Auto-cleaned up task: {task_id}")
+        
+        cleanup_task = asyncio.create_task(auto_cleanup())
+        self.cleanup_tasks[task_id] = cleanup_task
+
+    def _update_memory_usage(self, response: MetadataResponse):
+        """Estimate and track memory usage"""
+        estimated_size = 0
+        
+        # Estimate image memory (base64 data)
+        for img in response.processed_images:
+            if hasattr(img, 'data') and img.data:
+                # Base64 is ~1.33x the original size
+                estimated_size += len(img.data) * 0.75  # Rough estimate
+        
+        self.current_memory_usage += estimated_size
+        
+        # Force cleanup if memory limit exceeded
+        if self.current_memory_usage > self.max_memory_mb * 1024 * 1024:
+            self._force_cleanup_oldest()
+
+    def _release_memory(self, response: MetadataResponse):
+        """Release memory from a response object"""
+        memory_released = 0
+        
+        # Clear image base64 data
+        for img in response.processed_images:
+            if hasattr(img, 'data') and img.data:
+                memory_released += len(img.data) * 0.75
+                img.data = None  # Release base64 memory
+        
+        self.current_memory_usage = max(0, self.current_memory_usage - memory_released)
+
+    def _force_cleanup_oldest(self):
+        """Force cleanup of oldest tasks when memory limit exceeded"""
+        if not self.result_storage:
+            return
+            
+        # Get oldest task (assuming task_id includes timestamp)
+        oldest_task_id = min(self.result_storage.keys())
+        self.cleanup_task(oldest_task_id)
+        ok(f"Force cleaned up oldest task: {oldest_task_id}")
 
     def get_service_info(self) -> Dict[str, Any]:
         """Get service information"""
@@ -266,5 +336,8 @@ class MetadataService:
             "service_type": "MetadataService",
             "active_tasks": len(self.task_storage),
             "completed_results": len(self.result_storage),
-            "thread_pool_workers": self.thread_pool._max_workers
+            "thread_pool_workers": self.thread_pool._max_workers,
+            "memory_usage_mb": round(self.current_memory_usage / (1024 * 1024), 2),
+            "memory_limit_mb": self.max_memory_mb,
+            "auto_cleanup_tasks": len(self.cleanup_tasks)
         }

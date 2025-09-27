@@ -82,7 +82,6 @@ class FilterService:
         desc_parts.append("+ GENERAL always")
 
         filter_msg = " | ".join(desc_parts)
-        print(final_filter)
 
         return final_filter, filter_msg
 
@@ -147,11 +146,8 @@ class FilterService:
                 seen_ids.add(doc_id)
                 deduped_docs.append(doc)
             elif not doc_id:
-                # No fallback - if no ID, skip it
-                print(f"[EXPAND ERROR] Document missing ID, skipping")
                 continue
 
-        print(f"[EXPAND DEBUG] Text expansion: {len(expanded_docs)} -> {len(deduped_docs)} docs")
         return deduped_docs
 
     async def __batch_fetch_chunks(self, chunk_ids: List[str], score: float) -> List[Document]:
@@ -295,11 +291,20 @@ class FilterService:
         1. Analisis apakah konten **SECARA LANGSUNG atau PARSIAL** dapat menjawab atau relevan dengan pertanyaan, tolong pikirkan dengan baik apakah konten yang di maksud 
         relevan dengan pertanyaan jika tidak relevan maka kembalikan false
         MENJAWAB PARSIAL HANYA BERLAKU JIKA PERTANYAAN MERUPAKAN PERTANYAAN KOMPOSIT (NAMUN TIDAK BOLEH IMPLISIT HARUS EKSPLISIT)
-        ATAU PERTANYAAN YANG SANGAT GENERAL dan KONTEN yang di sajikan rasanya dapat membantu menjawab 
+        ATAU PERTANYAAN YANG SANGAT GENERAL dan KONTEN yang di sajikan rasanya dapat membantu menjawab
         pertanyaan secara sebagian. 
         2. Berikan respons Anda dalam format JSON yang KETAT dengan bidang-bidang berikut:
         3. tolong jangan berbias di kolom explanation 
         4. Setelah di cek kemudian baru di cek apakah relevan atau tidak relevan berdasarkan explanation yang dibuat
+        5. Khusus untuk Pertanyaaan dosen jika general tolong hanya filter bagian yang sangat relevan
+        daftar : 
+            Tabel dosen teknik mesin dan industri FT UGM -> jika menanyakan Mengenai Dosen secara general 
+            Tabel Kepala Laboratorium Departemen teknik mesi dan industri -> Jika menanyakan hal2 yang terkait dengan laboratorium 
+            Tabel Professor Kepala laboratorium DTMI -> Jika menanyakan mengenai Professor UGM 
+            Tabel dosen Pranatugas -> Jika menanayakan mengenai Dosen Pranatugas 
+            Tabel Pengurus -> ada spesifik antara (Sarjana, Magister dan Doktor ) Jika memang tidak terdapat filter spesifik loloskan semua 
+        Tabel dosen != Tabel Professor.
+        Jika item merupakan sebuah tabel Lebih baik. Disampaikan secara list. 
            {{
              "explanation": "Jelaskan mengapa konten ini relevan atau tidak relevan dengan pertanyaan",
              "is_relevant": true atau false
@@ -366,6 +371,7 @@ class FilterService:
         used_normalized_csv_captions = set()
 
         def normalize_caption(caption: str) -> str:
+
             if not caption:
                 return ""
             cleaned_caption = re.sub(r'[^\w\s]', '', caption.lower())
@@ -473,13 +479,7 @@ class FilterService:
         print(f"[FILTER DEBUG] Found {len(raw_hits)} raw hits")
         if not raw_hits:
             raise ValueError(f"RAG ERROR: No hits found for query '{query}' with filter {where}")
-        if raw_hits:
-            print(f"[FILTER DEBUG] Sample hit metadata:")
-            for i, (doc, score) in enumerate(raw_hits[:2]):
-                meta = doc.metadata
-                print(
-                    f"  Hit {i+1}: type={meta.get('type')}, year={meta.get('year')}, dep={meta.get('dep')}, chapter={meta.get('chapter')}, score={score:.4f}")
-
+   
         groups = self.group_by_modality(raw_hits)
 
         # expand TEXT docs, keep others as-is
@@ -513,7 +513,6 @@ class FilterService:
         image_paths = [(os.path.join(self.static_dir, p), caption) for p, caption in image_paths]
         csv_paths = [(os.path.join(self.static_dir, p), caption) for p, caption in csv_paths]
         combined_context = "\n\n".join(all_texts)
-        print(image_paths)
         return {
             'context': combined_context,
             'image_paths': image_paths,

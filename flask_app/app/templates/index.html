@@ -161,7 +161,7 @@
             this.messages[i] = {
               ...this.messages[i],
               streaming: false,
-              content: `<span class="text-red-400">[SNAFU] Network error</span>`
+              content: `<span class="text-red-400">Koneksi Mohon Untuk mengirim pesan yang anda ingin kirim</span>`
             };
           }
           this.isLoading = false;
@@ -214,13 +214,13 @@
 
       formatAnswer(answer) {
         if (!answer) return 'Tidak ada respons yang diterima';
-        
+
         // First sanitize the content to remove any dangerous HTML/JS
         const sanitized = DOMPurify.sanitize(answer, {
           ALLOWED_TAGS: ['br', 'strong', 'em', 'p', 'ul', 'ol', 'li'],
           ALLOWED_ATTR: []
         });
-        
+
         // Then apply safe formatting
         return sanitized.replace(/\n/g, '\n')
           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')

@@ -174,7 +174,6 @@ def to_static_url(relative_path):
 def load_image_base64(image_path: str, image_caption: str) -> Dict[str, Any]:
     """Load image and convert to base64 - from legacy code"""
     if not image_path:
-        print(f"[Image Load Error] No image_path provided for caption: {image_caption}")
         return {
             'path': image_path,
             'filename': 'Unknown',
@@ -184,7 +183,6 @@ def load_image_base64(image_path: str, image_caption: str) -> Dict[str, Any]:
         }
 
     if not os.path.exists(image_path):
-        print(f"[Image Load Error] File not found: {image_path}")
         return {
             'path': image_path,
             'filename': os.path.basename(image_path),
@@ -232,7 +230,6 @@ def load_image_base64(image_path: str, image_caption: str) -> Dict[str, Any]:
             image_binary = f.read()
             image_base64 = base64.b64encode(image_binary).decode('utf-8')
 
-        print(f"[Image Load Success] Loaded {image_path}")
         return {
             'path': image_path,
             'filename': os.path.basename(image_path),

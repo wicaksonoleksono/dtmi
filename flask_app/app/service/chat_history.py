@@ -30,13 +30,6 @@ class InMemoryHistory(BaseChatMessageHistory, BaseModel):
         # Trim after every write
         self._trim_to_last_n_exchanges()
         
-        # Debug: Print final saved messages
-        print(f"[DEBUG] Total messages in history: {len(self.messages)}")
-        for i, msg in enumerate(self.messages):
-            msg_type = type(msg).__name__
-            content_preview = msg.content[:50] if hasattr(msg, 'content') else str(msg)[:50]
-            print(f"[DEBUG] Message {i}: {msg_type} - {content_preview}...")
-
     def clear(self) -> None:
         self.messages = []
         self.system_initialized = False
@@ -124,32 +117,55 @@ class InMemoryHistory(BaseChatMessageHistory, BaseModel):
 # Format: {session_id: (history_instance, last_access_time)}
 _store: Dict[str, tuple] = {}
 _EXPIRY_TIME = 120  # 2 minutes in seconds
+_MAX_SESSIONS = 100  # Hard limit to prevent memory blow
 _cleanup_lock = threading.Lock()
 _cleanup_thread = None
 _cleanup_thread_running = threading.Event()
 
 
 def _cleanup_expired_sessions():
-    """Remove sessions that have been idle for more than _EXPIRY_TIME seconds"""
+    """Efficient cleanup with memory protection"""
     current_time = time.time()
     expired_sessions = []
     
     with _cleanup_lock:
-        for session_id, (history, last_access) in _store.items():
-            if current_time - last_access > _EXPIRY_TIME:
+        # If we're at max capacity, force cleanup of oldest sessions
+        if len(_store) >= _MAX_SESSIONS:
+            # Sort by last_access and remove oldest 20%
+            sorted_sessions = sorted(_store.items(), key=lambda x: x[1][1])
+            sessions_to_remove = sorted_sessions[:_MAX_SESSIONS // 5]
+            for session_id, _ in sessions_to_remove:
                 expired_sessions.append(session_id)
+        else:
+            # Normal time-based cleanup
+            for session_id, (history, last_access) in _store.items():
+                if current_time - last_access > _EXPIRY_TIME:
+                    expired_sessions.append(session_id)
         
+        # Remove in batches to avoid long locks
         for session_id in expired_sessions:
-            del _store[session_id]
-            print(f"Cleaned up expired session: {session_id}")
+            if session_id in _store:
+                del _store[session_id]
+    
+    if expired_sessions:
+        print(f"Cleaned up {len(expired_sessions)} sessions")
 
 
 def _background_cleanup():
-    """Background thread function to periodically clean up expired sessions"""
+    """Dynamic interval cleanup based on load"""
     while not _cleanup_thread_running.is_set():
         try:
-            # Wait for 30 seconds before next cleanup
-            if _cleanup_thread_running.wait(30):
+            user_count = len(_store)
+            
+            # Dynamic interval: more load = more frequent cleanup
+            if user_count > 80:
+                interval = 10
+            elif user_count > 50:
+                interval = 15
+            else:
+                interval = 30
+                
+            if _cleanup_thread_running.wait(interval):
                 break  # Exit if the event is set (cleanup requested)
             _cleanup_expired_sessions()
         except Exception as e:

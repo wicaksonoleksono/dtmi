@@ -60,7 +60,8 @@ KAPAN BUTUH CLARIFICATION (gunakan no_rag + what_to_clarify):
 - Angka tanpa konteks: "14 SKS bagaimana?" → apa aspek yang ditanyakan?
 - Skenario samar: "kalau misal..." tanpa pertanyaan spesifik
 - Nama tanpa klarifikasi: "Siapa ari" -> apakah yang dimaksud ari dosen atau siapa ?
-
+- Klarifikasi untuk menentukan apakah yang dimaksud spesifik terhadap ti atau tm atau dtmi atau secara general 
+- Pertanyaan secara gramatik tidak jelas 
 RAG_OPTIMIZED_QUERY RULES (untuk rag action):
 - HAPUS semua kata tanya: berapa, siapa, kapan, dimana, bagaimana, apa, gimana
 - HAPUS stop words: yang, adalah, untuk, dengan, dari, ke, di, dalam, bisa, dapat
@@ -68,7 +69,14 @@ RAG_OPTIMIZED_QUERY RULES (untuk rag action):
 - Contoh: "Berapa SKS yang bisa diambil?" → "SKS diambil", "Siapa dosen TI?" → "dosen TI"
 
 SINGKATAN:
-TI → Teknik Industri, TM → Teknik Mesin, matkul → mata kuliah (clarify SKS?), prof → professor, tendik → tenaga pendidikan
+TI → Teknik Industri, 
+TM → Teknik Mesin, 
+DTMI -> Departemen Teknik Mesin Dan Industri UGM 
+matkul → mata kuliah (clarify SKS?), 
+prof → professor, 
+tendik → tenaga pendidikan
+Tolong singkatan di perpanjang 
+KP -> Kerja Praktik
 
 CONTOH:
 Input: "kalau untuk S2?" (setelah "Apa persyaratan S1?")
@@ -102,7 +110,6 @@ Output: {{
 - JANGAN tambah kata kunci di luar pertanyaan untuk expanded_query dan rag_optimized_query
 - JANGAN tambah suffix "DTMI UGM" karena mengacaukan RAG
 - PERTAHANKAN kata tanya Bahasa Indonesia dalam rag_optimized_query
-- Meskipun konteks sebelumnya pernah ditanyakan, tetap gunakan RAG jika butuh knowledge base
 
 FORMAT RESPONSE: JSON ketat
 
