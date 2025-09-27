@@ -106,7 +106,7 @@ class WablassService:
                 else:
                     # Direct response case - process through LLM with session_id
                     response = await self.wablass_agent.ainvoke(
-                        [HumanMessage(content=router_result['response'])],
+                        router_result['response'],
                         config={"configurable": {"session_id": session_id}}
                     )
                     return {
@@ -136,7 +136,7 @@ class WablassService:
             history.add_messages([original_message])
 
             response = await self.wablass_agent.ainvoke(
-                [HumanMessage(content=rag_prompt)],
+                rag_prompt,
                 config={"configurable": {"session_id": session_id}}
             )
 
