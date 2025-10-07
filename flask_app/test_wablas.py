@@ -8,8 +8,8 @@ import json
 
 async def test_wablas_api():
     # Test data with hardcoded values
-    api_key = "FAbWchgjKaztQkVY79pCKXD0Wzv8tH9EqCzJHp5uIXO9xQAYMcAylFz"
-    secret_key = "LcLvu6gI"
+    api_key = "CheoAUw7edW9G0RQRoJuEtYZ1wJ9R0MNq86Xjz88wgRXKgb2AH0hiTW"
+    secret_key = "II43pmFo"
     
     api_url = 'https://sby.wablas.com/api/send-message'
     headers = {'Authorization': f"{api_key}.{secret_key}"}
