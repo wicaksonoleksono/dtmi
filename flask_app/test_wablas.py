@@ -5,11 +5,19 @@ Quick test script to debug Wablas API integration
 import asyncio
 import httpx
 import json
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 async def test_wablas_api():
-    # Test data with hardcoded values
-    api_key = "CheoAUw7edW9G0RQRoJuEtYZ1wJ9R0MNq86Xjz88wgRXKgb2AH0hiTW"
-    secret_key = "II43pmFo"
+    # Load credentials from .env
+    api_key = os.getenv("WABLASS_API_KEY")
+    secret_key = os.getenv("WABLASS_WEBHOOK_SECRET")
+
+    if not api_key or not secret_key:
+        print("Error: WABLASS_API_KEY or WABLASS_WEBHOOK_SECRET not set in .env")
+        return
     
     api_url = 'https://sby.wablas.com/api/send-message'
     headers = {'Authorization': f"{api_key}.{secret_key}"}

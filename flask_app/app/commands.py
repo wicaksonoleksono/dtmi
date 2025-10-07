@@ -159,6 +159,54 @@ def register_commands(app):
             click.secho("❌ Failed to list collections.", fg="red")
             click.echo(f"   Error: {e}")
 
+    @app.cli.command('ping-wb')
+    @click.option('--phone', '-p', default='6281234567890', show_default=True,
+                  help="Target phone number for test message.")
+    @click.option('--message', '-m', default='Test message from ping-wb CLI', show_default=True,
+                  help="Test message to send.")
+    def ping_wablas(phone, message):
+        """Test Wablas API by sending a test message."""
+        import httpx
+
+        api_key = app.config.get("WABLASS_API_KEY")
+        secret_key = app.config.get("WABLASS_WEBHOOK_SECRET")
+
+        if not api_key or not secret_key:
+            click.echo("WABLASS_API_KEY or WABLASS_WEBHOOK_SECRET not configured in .env")
+            return
+
+        api_url = 'https://sby.wablas.com/api/send-message'
+        headers = {'Authorization': f"{api_key}.{secret_key}"}
+        payload = {'phone': phone, 'message': message}
+
+        click.echo(f"Testing Wablas API...")
+        click.echo(f"URL: {api_url}")
+        click.echo(f"Phone: {phone}")
+        click.echo(f"Message: {message}")
+
+        async def send_request():
+            try:
+                async with httpx.AsyncClient(timeout=15) as client:
+                    resp = await client.post(api_url, headers=headers, json=payload)
+
+                    click.echo(f"\nResponse status: {resp.status_code}")
+                    click.echo(f"Response headers: {dict(resp.headers)}")
+                    click.echo(f"Response text: {resp.text}")
+
+                    try:
+                        data = resp.json()
+                        import json
+                        click.echo(f"Response JSON: {json.dumps(data, indent=2)}")
+                    except Exception as e:
+                        click.echo(f"JSON parse error: {e}")
+
+            except httpx.TimeoutException:
+                click.echo("Request timeout")
+            except httpx.HTTPError as e:
+                click.echo(f"HTTP error: {e}")
+
+        asyncio.run(send_request())
+
     @app.cli.command("routes")
     @click.option("--format", type=click.Choice(["plain", "md"]), default="plain",
                   help="Output format: plain text or Markdown table.")

@@ -14,8 +14,8 @@ wablas_bp = Blueprint('wablas_bp', __name__)
 
 
 async def send_wablas_message(recipient_phone: str, message_text: str) -> bool:
-    api_key = "CheoAUw7edW9G0RQRoJuEtYZ1wJ9R0MNq86Xjz88wgRXKgb2AH0hiTW"
-    secret_key = "35typj3M"
+    api_key = current_app.config.get("WABLASS_API_KEY")
+    secret_key = current_app.config.get("WABLASS_WEBHOOK_SECRET")
     logger.info(f"Sending message to: {recipient_phone}")
     logger.info(f"Message preview: {message_text[:100]}...")
     logger.debug(f"API Key present: {bool(api_key)}")
