@@ -1,6 +1,14 @@
 import httpx
+import logging
 from flask import Blueprint, request, jsonify, current_app
 from ..service import WablassService
+
+# Configure logger to write to optima.log
+logger = logging.getLogger('wablass')
+logger.setLevel(logging.INFO)
+handler = logging.FileHandler('optima.log')
+handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+logger.addHandler(handler)
 
 wablas_bp = Blueprint('wablas_bp', __name__)
 
@@ -8,13 +16,13 @@ wablas_bp = Blueprint('wablas_bp', __name__)
 async def send_wablas_message(recipient_phone: str, message_text: str) -> bool:
     api_key = "CheoAUw7edW9G0RQRoJuEtYZ1wJ9R0MNq86Xjz88wgRXKgb2AH0hiTW"
     secret_key = "35typj3M"
-    print(f"[WABLAS DEBUG] Sending to: {recipient_phone}")
-    print(f"[WABLAS DEBUG] Message: {message_text[:100]}...")
-    print(f"[WABLAS DEBUG] API Key present: {bool(api_key)}")
-    print(f"[WABLAS DEBUG] Secret present: {bool(secret_key)}")
+    logger.info(f"Sending message to: {recipient_phone}")
+    logger.info(f"Message preview: {message_text[:100]}...")
+    logger.debug(f"API Key present: {bool(api_key)}")
+    logger.debug(f"Secret present: {bool(secret_key)}")
 
     if not api_key or not secret_key:
-        print("[WABLAS DEBUG] WABLASS_API_KEY or WABLASS_WEBHOOK_SECRET not configured")
+        logger.error("WABLASS_API_KEY or WABLASS_WEBHOOK_SECRET not configured")
         return False
     api_url = 'https://sby.wablas.com/api/send-message'
     headers = {'Authorization': f"{api_key}.{secret_key}"}
@@ -25,39 +33,40 @@ async def send_wablas_message(recipient_phone: str, message_text: str) -> bool:
             data = {}
             try:
                 data = resp.json()
-                print(f"[WABLAS DEBUG] Response JSON: {data}")
+                logger.info(f"Response JSON: {data}")
             except Exception as e:
-                print(f"[WABLAS DEBUG] JSON parse error: {e}")
-                print(f"[WABLAS DEBUG] Non-JSON response from Wablas: {resp.text[:300]}")
+                logger.error(f"JSON parse error: {e}")
+                logger.error(f"Non-JSON response from Wablas: {resp.text[:300]}")
             if resp.is_success and data.get('status') == 'success':
-                print("[WABLAS DEBUG] Success!")
+                logger.info("Message sent successfully!")
                 return True
-            print(f"[WABLAS DEBUG] Failed - HTTP {resp.status_code}, Data: {data}")
-            print(f"[WABLAS DEBUG] Wablas send failed HTTP {resp.status_code}: {data or resp.text[:300]}")
+            logger.error(f"Failed - HTTP {resp.status_code}, Data: {data}")
+            logger.error(f"Wablas send failed HTTP {resp.status_code}: {data or resp.text[:300]}")
             return False
 
     except httpx.TimeoutException:
-        print("[WABLAS DEBUG] Wablas send timeout")
+        logger.error("Wablas send timeout")
         return False
     except httpx.HTTPError as e:
-        print(f"[WABLAS DEBUG] Wablas HTTP error: {e}")
+        logger.error(f"Wablas HTTP error: {e}")
         return False
 
 
 @wablas_bp.route('/webhook', methods=['POST'])
 async def webhook_endpoint():
-    print("[WEBHOOK DEBUG] Webhook called!")
+    logger.info("Webhook called!")
     data = request.get_json(silent=True) or {}
-    print(f"[WEBHOOK DEBUG] Received data: {data}")
+    logger.info(f"Received data: {data}")
 
     if data.get('isFromMe'):
+        logger.info("Skipped self-sent message")
         return jsonify({'status': 'success', 'message': 'Skipped self-sent message'})
 
     user_message = (data.get('message') or '').strip()
     target_phone = data.get('phone')  # per docs: phone = sender/customer number
 
     if not user_message or not target_phone:
-        print("[WEBHOOK DEBUG] Missing fields: message or phone")
+        logger.warning("Missing fields: message or phone")
         return jsonify({'error': 'Missing required fields: message and phone'}), 400
 
     try:
