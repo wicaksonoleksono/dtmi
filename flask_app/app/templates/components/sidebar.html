@@ -1,6 +1,6 @@
 <!-- Sidebar Component -->
 <aside
-  class="fixed left-0 top-0 h-full w-80 backdrop-blur-xl border-r transition-all duration-300 z-50 lg:z-20"
+  class="fixed left-0 top-0 h-full w-80 backdrop-blur-xl border-r transition-all duration-300 z-50 lg:z-20 flex flex-col"
   :class="[
     darkMode ? 'bg-claude-surface-dark/80 border-claude-border-dark' : 'bg-claude-surface/80 border-claude-border',
     sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
@@ -149,8 +149,7 @@
 
   <!-- Predefined Prompts -->
   <div
-    class="flex flex-col pt-6"
-    style="height: calc(100vh - 200px)"
+    class="flex-1 flex flex-col pt-6 pb-6 overflow-hidden"
     x-data="promptManager()"
   >
     <div class="px-6 mb-4">
@@ -185,7 +184,7 @@
   </div>
 
   <!-- Footer Info -->
-  <div class="absolute bottom-6 left-6 right-6">
+  <div class="px-6 pb-6 pt-4">
     <!-- Reset Conversation Button -->
     <div class="mb-3">
       <a
