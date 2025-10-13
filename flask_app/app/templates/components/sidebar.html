@@ -29,6 +29,13 @@
             class="w-full h-full object-cover"
           />
         </div>
+        <!-- Sarjana -->
+        <!-- https://drive.google.com/file/d/1iDqHO5yYnRmPpBEkRGgH62rUVPhWfp4R/view?usp=sharing -->
+        <!-- magister -->
+        <!-- https://drive.google.com/file/d/1VS7Ti6VTx6dpBqlTL29cq8e_OmKWhKVa/view?usp=sharing -->
+        <!-- doktor  -->
+        <!-- https://drive.google.com/file/d/1qgRy567cwUjQbULU3RVvAKDe1AFMLYME/view?usp=sharing -->
+
         <div>
           <h1 class="font-semibold text-lg">Tasya</h1>
           <p class="text-sm opacity-70">Tanya Saya !</p>
@@ -64,6 +71,79 @@
           />
         </svg>
       </button>
+    </div>
+  </div>
+
+  <!-- Softcopy Dokumen Section -->
+  <div
+    class="px-6 pt-6 pb-4 border-b"
+    :class="darkMode ? 'border-claude-border-dark' : 'border-claude-border'"
+  >
+    <h3 class="text-sm font-medium opacity-70 mb-3">Softcopy Dokumen</h3>
+    <div class="space-y-2">
+      <a
+        href="https://drive.google.com/file/d/1iDqHO5yYnRmPpBEkRGgH62rUVPhWfp4R/view?usp=sharing"
+        target="_blank"
+        class="flex items-center gap-2 p-3 rounded-xl transition-all duration-200 hover:scale-[1.02]"
+        :class="darkMode ? 'bg-claude-border-dark hover:bg-gray-600' : 'bg-claude-border hover:bg-gray-200'"
+      >
+        <svg
+          class="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          />
+        </svg>
+        <span class="text-sm">Sarjana</span>
+      </a>
+      <a
+        href="https://drive.google.com/file/d/1VS7Ti6VTx6dpBqlTL29cq8e_OmKWhKVa/view?usp=sharing"
+        target="_blank"
+        class="flex items-center gap-2 p-3 rounded-xl transition-all duration-200 hover:scale-[1.02]"
+        :class="darkMode ? 'bg-claude-border-dark hover:bg-gray-600' : 'bg-claude-border hover:bg-gray-200'"
+      >
+        <svg
+          class="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          />
+        </svg>
+        <span class="text-sm">Magister</span>
+      </a>
+      <a
+        href="https://drive.google.com/file/d/1qgRy567cwUjQbULU3RVvAKDe1AFMLYME/view?usp=sharing"
+        target="_blank"
+        class="flex items-center gap-2 p-3 rounded-xl transition-all duration-200 hover:scale-[1.02]"
+        :class="darkMode ? 'bg-claude-border-dark hover:bg-gray-600' : 'bg-claude-border hover:bg-gray-200'"
+      >
+        <svg
+          class="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          />
+        </svg>
+        <span class="text-sm">Doktor</span>
+      </a>
     </div>
   </div>
 
@@ -113,13 +193,23 @@
         class="w-full flex items-center justify-center gap-2 p-3 rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-95"
         :class="darkMode ? 'bg-claude-surface-dark hover:bg-gray-600 border border-claude-border-dark' : 'bg-claude-surface hover:bg-gray-100 border border-claude-border'"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        <svg
+          class="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+          />
         </svg>
         <span class="text-sm font-medium">Reset Percakapan</span>
       </a>
     </div>
-    
+
     <div
       class="p-4 rounded-xl"
       :class="darkMode ? 'bg-claude-border-dark' : 'bg-claude-border'"
