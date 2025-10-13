@@ -1,12 +1,40 @@
 <!DOCTYPE html>
-<html lang="en" x-data="themeManager()" :class="{ 'dark': darkMode }">
+<html lang="id" x-data="themeManager()" :class="{ 'dark': darkMode }">
   <head>
     <meta charset="UTF-8" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>{% block title %}Tasya{% endblock %}</title>
+    <title>{% block title %}Tasya - Asisten AI Departemen Teknik Mesin dan Industri UGM{% endblock %}</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Tasya adalah asisten AI untuk Departemen Teknik Mesin dan Industri Universitas Gadjah Mada. Akses informasi akademik, dokumen softcopy Sarjana, Magister, dan Doktor dengan mudah." />
+    <meta name="keywords" content="Tasya, UGM, Universitas Gadjah Mada, Teknik Mesin, Teknik Industri, DTMI, Asisten AI, Chatbot, Akademik, Sarjana, Magister, Doktor, Tugas Akhir, Skripsi, Tesis, Disertasi" />
+    <meta name="author" content="Departemen Teknik Mesin dan Industri UGM" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="{{ request.url }}" />
+
+    <!-- Open Graph Meta Tags (Facebook, LinkedIn) -->
+    <meta property="og:title" content="Tasya - Asisten AI DTMI UGM" />
+    <meta property="og:description" content="Asisten AI untuk Departemen Teknik Mesin dan Industri Universitas Gadjah Mada. Tanya Saya tentang informasi akademik dan dokumen!" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="{{ request.url }}" />
+    <meta property="og:image" content="{{ url_for('static', filename='tasyapp.jpg', _external=True) }}" />
+    <meta property="og:site_name" content="Tasya - DTMI UGM" />
+    <meta property="og:locale" content="id_ID" />
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Tasya - Asisten AI DTMI UGM" />
+    <meta name="twitter:description" content="Asisten AI untuk Departemen Teknik Mesin dan Industri Universitas Gadjah Mada." />
+    <meta name="twitter:image" content="{{ url_for('static', filename='tasyapp.jpg', _external=True) }}" />
+
+    <!-- Additional SEO -->
+    <meta name="language" content="Indonesian" />
+    <meta name="geo.region" content="ID-YO" />
+    <meta name="geo.placename" content="Yogyakarta" />
+    <meta name="theme-color" content="#fafaf9" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
