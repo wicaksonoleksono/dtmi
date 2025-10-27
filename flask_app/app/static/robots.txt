@@ -1,0 +1,13 @@
+# robots.txt for Tasya - DTMI UGM Chatbot
+# This file tells search engines which pages they can crawl
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /reset-conversation
+
+# Sitemap location
+Sitemap: https://tasya.dtmiugm.id/sitemap.xml
+
+# Crawl-delay to be respectful to server
+Crawl-delay: 1

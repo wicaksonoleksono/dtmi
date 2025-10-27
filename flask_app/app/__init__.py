@@ -176,6 +176,18 @@ def create_app() -> Flask:
 
         return redirect(url_for('serve_index'))
 
+    @app.route("/robots.txt")
+    def serve_robots():
+        """Serve robots.txt for search engine crawlers"""
+        from flask import send_from_directory
+        return send_from_directory(app.static_folder, "robots.txt", mimetype="text/plain")
+
+    @app.route("/sitemap.xml")
+    def serve_sitemap():
+        """Serve sitemap.xml for search engines"""
+        from flask import send_from_directory
+        return send_from_directory(app.static_folder, "sitemap.xml", mimetype="application/xml")
+
     # CLI commands and HTTP routes
     register_commands(app)
     app.register_blueprint(wablas_bp)

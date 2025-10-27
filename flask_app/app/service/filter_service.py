@@ -306,7 +306,7 @@ class FilterService:
         Tabel dosen != Tabel Professor.
         Jika item merupakan sebuah tabel Lebih baik. Disampaikan secara list. 
            {{
-             "explanation": "Jelaskan mengapa konten ini relevan atau tidak relevan dengan pertanyaan",
+             "explanation": "Jelaskan mengapa konten ini relevan atau tidak relevan dengan pertanyaan maks 2 kalimat",
              "is_relevant": true atau false
            }}
         PENTING: Kembalikan HANYA objek JSON tanpa teks tambahan sebelum tau sesudah.

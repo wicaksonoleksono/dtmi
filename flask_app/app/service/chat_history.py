@@ -16,24 +16,18 @@ class InMemoryHistory(BaseChatMessageHistory, BaseModel):
         arbitrary_types_allowed = True
 
     def add_messages(self, messages: List[BaseMessage]) -> None:
-        # Process each message to clean HumanMessage content while preserving AI messages
         processed_messages = []
         for msg in messages:
             if isinstance(msg, HumanMessage):
-                # original_content = msg.content
                 cleaned_content = self._extract_query_from_human_message(msg.content)
                 processed_messages.append(HumanMessage(content=cleaned_content))
             else:
                 processed_messages.append(msg)
-                
         self.messages.extend(processed_messages)
-        # Trim after every write
         self._trim_to_last_n_exchanges()
-        
     def clear(self) -> None:
         self.messages = []
         self.system_initialized = False
-
     def ensure_system_message(self) -> None:
         """Add system message at the start if not already added."""
         if not self.system_initialized and hasattr(current_app, "config"):
@@ -55,10 +49,9 @@ class InMemoryHistory(BaseChatMessageHistory, BaseModel):
             # Return just the query part extracted from the ${query}$ format
             return match.group(1).strip()
         else:
-            # If the pattern isn't found, return the original content
+            # If the pattern isn't found, retun the original content
             return content
 
-    # --- trimming helpers ---
     def _trim_to_last_n_exchanges(self) -> None:
         """
         Keep the system prompt (if any) + the last N (human, ai) exchanges.
