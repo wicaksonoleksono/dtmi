@@ -188,6 +188,12 @@ def create_app() -> Flask:
         from flask import send_from_directory
         return send_from_directory(app.static_folder, "sitemap.xml", mimetype="application/xml")
 
+    @app.route("/googlef825bd38a9b3e291.html")
+    def serve_google_verification():
+        """Serve Google Search Console verification file"""
+        from flask import send_from_directory
+        return send_from_directory(app.static_folder, "googlef825bd38a9b3e291.html", mimetype="text/html")
+
     # CLI commands and HTTP routes
     register_commands(app)
     app.register_blueprint(wablas_bp)
