@@ -239,13 +239,8 @@ def query():
                     print(f"[CLEANUP ERROR] {cleanup_error}")
         except Exception as e:
             print(f"Stream error: {e}")
-            # Check if it's a JSON parsing error and provide user-friendly message
-            error_msg = str(e)
-            if any(keyword in error_msg.lower() for keyword in ['json', 'parse', 'decode', 'connection', 'api']):
-                user_friendly_msg = "Mohon maaf, data sedang tidak tersedia. Mohon hubungi pengelola."
-            else:
-                user_friendly_msg = str(e)
-            yield f'data: {json.dumps({"type":"error","message":user_friendly_msg})}\n\n'
+            # Return raw error message
+            yield f'data: {json.dumps({"type":"error","message":str(e)})}\n\n'
 
     return Response(
         stream_with_context(generate_stream()),

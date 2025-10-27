@@ -129,7 +129,7 @@
 
         es.onmessage = e => {
           const payload = JSON.parse(e.data);
-          const { type, data } = payload;
+          const { type, data, message } = payload;
 
           if (type === 'chunk') {
             const i = this.messages.findIndex(m => m.id === msg.id);
@@ -147,6 +147,17 @@
                 references: data.references || []
               };
             }
+          } else if (type === 'error') {
+            const i = this.messages.findIndex(m => m.id === msg.id);
+            if (i !== -1) {
+              this.messages[i] = {
+                ...this.messages[i],
+                streaming: false,
+                content: `<span class="text-red-400">${message || 'Unknown error'}</span>`
+              };
+            }
+            this.isLoading = false;
+            es.close();
           } else if (type === 'stream_end') {
             const i = this.messages.findIndex(m => m.id === msg.id);
             if (i !== -1) this.messages[i] = { ...this.messages[i], streaming: false };
@@ -161,7 +172,7 @@
             this.messages[i] = {
               ...this.messages[i],
               streaming: false,
-              content: `<span class="text-red-400">Koneksi Mohon Untuk mengirim pesan yang anda ingin kirim</span>`
+              content: `<span class="text-red-400">Koneksi terputus. Mohon kirim pesan lagi.</span>`
             };
           }
           this.isLoading = false;
