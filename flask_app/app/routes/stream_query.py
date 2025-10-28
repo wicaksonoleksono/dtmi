@@ -94,8 +94,8 @@ def query():
     def generate_stream():
         try:
             # Initialize services
+            context_expansion_window=current_app.config["DEFAULT_CONTEXT_EXPANSION_WINDOW"]
             router = RouterAgent(current_app.agent, DTMI_DOMAIN)
-
             filter_service = FilterService(
                 static_dir=current_app.static_folder,
                 vectorstore=current_app.vector_db,

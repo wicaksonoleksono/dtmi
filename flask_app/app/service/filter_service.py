@@ -475,7 +475,7 @@ class FilterService:
             self.context_expansion_window = max(1, int(context_expansion_window))
         where, _ = self.build_filter(query_types, year)
         raw_hits = await self.similarity_search(query, top_k, where)
-        print(f"[FILTER DEBUG] Found {len(raw_hits)} raw hits")
+        print(f"[FILTER DEBUG] Found {len(raw_hits)} raw hits \n{context_expansion_window}")
         if not raw_hits:
             raise ValueError(f"RAG ERROR: No hits found for query '{query}' with filter {where}")
    

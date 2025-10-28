@@ -101,8 +101,8 @@ def create_app() -> Flask:
     # Agent LLM - no system preprompt (fully agnostic)
     app.agent = ChatOpenAI(
         api_key=app.config["OPENAI_API_KEY"],
-        # model=app.config["OPENAI_MODEL"],
-        model="gpt-4.1-nano-2025-04-14",
+        model=app.config["OPENAI_MODEL"],
+        # model="gpt-4.1-nano-2025-04-14",
         temperature=0,
         streaming=False,
         seed=0,
