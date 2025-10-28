@@ -282,7 +282,6 @@ class FilterService:
     async def __batch_relevance_check(self, doc: Document, query: str) -> Tuple[bool, str]:
         content = await self.__batch_build_content([doc], include_full_table=False)
         prompt = f"""
-        
         Tugas: Tentukan apakah konten berikut relevan dengan pertanyaan.
         Konteks: anda adalah penentu relevansi untuk konteks RAG anda runngin secara pararel dengan instance2 yang lain 
         Konten: {content[0]}
@@ -314,7 +313,7 @@ class FilterService:
         prompt = HumanMessage(content=prompt)
         response = await self.llm.ainvoke([prompt])
         response_text = str(response.content if hasattr(response, 'content') else response)
-        # print(f"[RELEVANCE DEBUG] Raw LLM response: '{response_text}'")
+        print(f"[shit]:{content[0]}\n[Resp]: '{response_text}'")
         try:
             json_match = re.search(r"\{.*\}", response_text, re.DOTALL)
             if not json_match:
