@@ -280,7 +280,7 @@ class FilterService:
         return f"{doc.metadata.get('id', '')}:{hash(query.lower().strip())}"
 
     async def __batch_relevance_check(self, doc: Document, query: str) -> Tuple[bool, str]:
-        content = await self.__batch_build_content([doc], include_full_table=True)
+        content = await self.__batch_build_content([doc], include_full_table=False)
         prompt = f"""
         
         Tugas: Tentukan apakah konten berikut relevan dengan pertanyaan.

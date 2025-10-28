@@ -116,7 +116,7 @@ FORMAT RESPONSE: JSON ketat
 
         response = await self.llm.ainvoke(router_prompt)
         response_text = response.content if hasattr(response, 'content') else str(response)
-
+        print(response_text)
         try:
             # Extract JSON from response
             import re
