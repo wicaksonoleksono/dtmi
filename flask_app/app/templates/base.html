@@ -6,38 +6,104 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>{% block title %}Tasya - Asisten AI Departemen Teknik Mesin dan Industri UGM{% endblock %}</title>
+    <title>{% block title %}Tasya - Pusat Informasi Mahasiswa Departemen Teknik Mesin dan Industri UGM{% endblock %}</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon_io/favicon.ico') }}" />
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon_io/favicon-16x16.png') }}" />
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon_io/favicon-32x32.png') }}" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='favicon_io/apple-touch-icon.png') }}" />
+    <link rel="manifest" href="{{ url_for('static', filename='favicon_io/site.webmanifest') }}" />
 
     <!-- Google Search Console Verification -->
     <meta name="google-site-verification" content="z7VzlpSPLsdjlgKinS1Je867gR_Erm_8hlqvGVkKuPw" />
 
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Tasya adalah asisten AI untuk Departemen Teknik Mesin dan Industri Universitas Gadjah Mada. Akses informasi akademik, dokumen softcopy Sarjana, Magister, dan Doktor dengan mudah." />
-    <meta name="keywords" content="Tasya, UGM, Universitas Gadjah Mada, Teknik Mesin, Teknik Industri, DTMI, Asisten AI, Chatbot, Akademik, Sarjana, Magister, Doktor, Tugas Akhir, Skripsi, Tesis, Disertasi" />
+    <meta name="description" content="Tasya - Pusat Informasi Mahasiswa Departemen Teknik Mesin dan Industri Universitas Gadjah Mada. Asisten AI DTMI UGM untuk informasi akademik, administrasi, kurikulum, beasiswa, jadwal kuliah, dan dokumen Sarjana, Magister, Doktor." />
+    <meta name="keywords" content="Tasya, Tasya DTMI, Pusat Informasi Mahasiswa, Departemen Teknik Mesin dan Industri, DTMI UGM, UGM, Universitas Gadjah Mada, Teknik Mesin UGM, Teknik Industri UGM, Asisten AI, Chatbot Mahasiswa, Informasi Akademik, Administrasi DTMI, Kurikulum DTMI, Beasiswa UGM, Jadwal Kuliah, Sarjana, Magister, Doktor, Tugas Akhir, Skripsi, Tesis, Disertasi, Yogyakarta" />
     <meta name="author" content="Departemen Teknik Mesin dan Industri UGM" />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
     <link rel="canonical" href="https://tasya.dtmiugm.id{{ request.path }}" />
 
+    <!-- Additional SEO -->
+    <meta name="application-name" content="Tasya - DTMI UGM" />
+    <meta name="apple-mobile-web-app-title" content="Tasya DTMI" />
+    <meta name="subject" content="Pusat Informasi Mahasiswa Teknik Mesin dan Industri Universitas Gadjah Mada" />
+    <meta name="classification" content="Education, Academic Information System" />
+
     <!-- Open Graph Meta Tags (Facebook, LinkedIn) -->
-    <meta property="og:title" content="Tasya - Asisten AI DTMI UGM" />
-    <meta property="og:description" content="Asisten AI untuk Departemen Teknik Mesin dan Industri Universitas Gadjah Mada. Tanya Saya tentang informasi akademik dan dokumen!" />
+    <meta property="og:title" content="Tasya - Pusat Informasi Mahasiswa DTMI UGM" />
+    <meta property="og:description" content="Pusat Informasi Mahasiswa Departemen Teknik Mesin dan Industri Universitas Gadjah Mada. Asisten AI untuk informasi akademik, administrasi, kurikulum, beasiswa, dan dokumen." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://tasya.dtmiugm.id{{ request.path }}" />
     <meta property="og:image" content="{{ url_for('static', filename='tasyapp.jpg', _external=True) }}" />
+    <meta property="og:image:alt" content="Tasya - Asisten AI DTMI UGM" />
     <meta property="og:site_name" content="Tasya - DTMI UGM" />
     <meta property="og:locale" content="id_ID" />
 
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Tasya - Asisten AI DTMI UGM" />
-    <meta name="twitter:description" content="Asisten AI untuk Departemen Teknik Mesin dan Industri Universitas Gadjah Mada." />
+    <meta name="twitter:title" content="Tasya - Pusat Informasi Mahasiswa DTMI UGM" />
+    <meta name="twitter:description" content="Pusat Informasi Mahasiswa Departemen Teknik Mesin dan Industri Universitas Gadjah Mada." />
     <meta name="twitter:image" content="{{ url_for('static', filename='tasyapp.jpg', _external=True) }}" />
+    <meta name="twitter:image:alt" content="Tasya - Asisten AI DTMI UGM" />
 
-    <!-- Additional SEO -->
+    <!-- Geo & Language -->
     <meta name="language" content="Indonesian" />
     <meta name="geo.region" content="ID-YO" />
     <meta name="geo.placename" content="Yogyakarta" />
+    <meta name="geo.position" content="-7.770556;110.377778" />
+    <meta name="ICBM" content="-7.770556, 110.377778" />
     <meta name="theme-color" content="#fafaf9" />
+
+    <!-- JSON-LD Structured Data for Google -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Tasya - Pusat Informasi Mahasiswa DTMI UGM",
+      "alternateName": ["Tasya", "Tasya DTMI", "Asisten AI DTMI UGM"],
+      "description": "Pusat Informasi Mahasiswa Departemen Teknik Mesin dan Industri Universitas Gadjah Mada. Asisten AI untuk informasi akademik, administrasi, kurikulum, beasiswa, jadwal kuliah, dan dokumen.",
+      "url": "https://tasya.dtmiugm.id",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "IDR"
+      },
+      "creator": {
+        "@type": "Organization",
+        "name": "Departemen Teknik Mesin dan Industri UGM",
+        "alternateName": "DTMI UGM",
+        "url": "https://dtmi.ft.ugm.ac.id",
+        "parentOrganization": {
+          "@type": "CollegeOrUniversity",
+          "name": "Universitas Gadjah Mada",
+          "alternateName": "UGM",
+          "url": "https://ugm.ac.id",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Yogyakarta",
+            "addressRegion": "DI Yogyakarta",
+            "addressCountry": "ID"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": "-7.770556",
+            "longitude": "110.377778"
+          }
+        }
+      },
+      "audience": {
+        "@type": "EducationalAudience",
+        "educationalRole": "student"
+      },
+      "inLanguage": "id-ID",
+      "keywords": "Tasya, Pusat Informasi Mahasiswa, Departemen Teknik Mesin dan Industri, DTMI UGM, Teknik Mesin UGM, Teknik Industri UGM, Asisten AI, Informasi Akademik"
+    }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {

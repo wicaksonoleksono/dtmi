@@ -5,13 +5,11 @@
   <!-- Main page -->
   <url>
     <loc>https://tasya.dtmiugm.id/</loc>
-    <lastmod>2025-10-28</lastmod>
+    <lastmod>2025-10-29</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
     <image:image>
       <image:loc>https://tasya.dtmiugm.id/static/tasyapp.jpg</image:loc>
-      <image:caption>Tasya - Asisten AI DTMI UGM</image:caption>
-      <image:title>Tasya Avatar</image:title>
     </image:image>
   </url>
 
