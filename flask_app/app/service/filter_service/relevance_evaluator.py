@@ -1,96 +1,170 @@
 # app/service/filter_service/relevance_evaluator.py
 
-import asyncio
 import json
 import re
 from typing import List, Tuple
 from langchain_core.documents import Document
 from langchain_core.messages import HumanMessage
 from .dependencies import FilterServiceDeps
-from .content_builder import batch_build_content
+from app.model.chroma_types import BatchRelevanceResponse
 
 
-def get_cache_key(doc: Document, query: str) -> str:
-    return f"{doc.metadata.get('id', '')}:{hash(query.lower().strip())}"
-
-
-async def batch_relevance_check(deps: FilterServiceDeps, doc: Document, query: str) -> Tuple[bool, str]:
-    content = await batch_build_content(deps, [doc], include_full_table=False)
-    prompt = f"""
-    Tugas: Tentukan apakah konten berikut relevan dengan pertanyaan.
-    Konteks: anda adalah penentu relevansi untuk konteks RAG anda runngin secara pararel dengan instance2 yang lain
-    Konten: {content[0]}
-    Pertanyaan: {query}
-    Instruksi:
-    1. Analisis apakah konten **SECARA LANGSUNG atau PARSIAL** dapat menjawab atau relevan dengan pertanyaan, tolong pikirkan dengan baik apakah konten yang di maksud
-    relevan dengan pertanyaan jika tidak relevan maka kembalikan false
-    MENJAWAB PARSIAL HANYA BERLAKU JIKA PERTANYAAN MERUPAKAN PERTANYAAN KOMPOSIT (NAMUN TIDAK BOLEH IMPLISIT HARUS EKSPLISIT)
-    ATAU PERTANYAAN YANG SANGAT GENERAL dan KONTEN yang di sajikan rasanya dapat membantu menjawab
-    pertanyaan secara sebagian.
-    2. Berikan respons Anda dalam format JSON yang KETAT dengan bidang-bidang berikut:
-    3. tolong jangan berbias di kolom explanation
-    4. Setelah di cek kemudian baru di cek apakah relevan atau tidak relevan berdasarkan explanation yang dibuat
-    5. Khusus untuk Pertanyaaan dosen jika general tolong hanya filter bagian yang sangat relevan
-    daftar :
-        Tabel dosen teknik mesin dan industri FT UGM -> jika menanyakan Mengenai Dosen secara general
-        Tabel Kepala Laboratorium Departemen teknik mesi dan industri -> Jika menanyakan hal2 yang terkait dengan laboratorium
-        Tabel Professor Kepala laboratorium DTMI -> Jika menanyakan mengenai Professor UGM
-        Tabel dosen Pranatugas -> Jika menanayakan mengenai Dosen Pranatugas
-        Tabel Pengurus -> ada spesifik antara (Sarjana, Magister dan Doktor ) Jika memang tidak terdapat filter spesifik loloskan semua
-    Tabel dosen != Tabel Professor.
-    Jika item merupakan sebuah tabel Lebih baik. Disampaikan secara list.
-       {{
-         "rationale": "Jelaskan mengapa konten ini relevan atau tidak relevan dengan pertanyaan maks 2 kalimat",
-         "is_relevant": true atau false
-       }}
-    PENTING: Kembalikan HANYA objek JSON tanpa teks tambahan sebelum tau sesudah.
+def format_document_with_tag(doc: Document, content: str, doc_num: int) -> str:
     """
-    prompt = HumanMessage(content=prompt)
-    response = await deps.llm.ainvoke([prompt])
-    response_text = str(response.content if hasattr(response, 'content') else response)
-    print(f"[shit]:{content[0]}\n[Resp]: '{response_text}'")
+    Format document with [docnum] tag structure (indoclimate pattern)
+
+    Args:
+        doc: LangChain Document with metadata
+        content: Pre-built content string (from content_builder with preview mode)
+        doc_num: Document number for tagging [1], [2], [3], etc.
+
+    Returns:
+        Formatted string: "[1]\nType: text\nsection_title: ...\nContent: ...\n---"
+    """
+    meta = doc.metadata
+    doc_type = meta.get('type', 'unknown')
+    section_title = meta.get('section_title', '') or 'N/A'
+    caption = meta.get('caption', '')
+
+    formatted = f"[{doc_num}]\n"
+    formatted += f"Type: {doc_type}\n"
+    formatted += f"section_title: {section_title}\n"  # ALWAYS include for context
+
+    if caption:
+        formatted += f"Caption: {caption}\n"
+
+    formatted += f"\n{content}\n"
+    formatted += "---\n"
+
+    return formatted
+
+
+async def batch_relevance_check(
+    deps: FilterServiceDeps,
+    docs_with_content: List[Tuple[Document, str]],
+    query: str
+) -> BatchRelevanceResponse:
+    """
+    Batch relevance checking using indoclimate pattern
+
+    Single LLM call evaluates ALL documents at once
+
+    Args:
+        deps: FilterServiceDeps with llm
+        docs_with_content: List of (Document, preview_content_string) tuples
+        query: User's query for relevance checking
+
+    Returns:
+        BatchRelevanceResponse with rationale and list of relevant IDs
+    """
+    # Format all documents with tags
+    formatted_docs = []
+    for idx, (doc, content) in enumerate(docs_with_content, start=1):
+        formatted = format_document_with_tag(doc, content, idx)
+        formatted_docs.append(formatted)
+
+    all_formatted = "\n".join(formatted_docs)
+
+    # Build prompt (adapted from indoclimate + existing DTMI rules)
+    prompt = f"""Tugas: Evaluasi relevansi setiap dokumen terhadap pertanyaan pengguna.
+
+Pertanyaan: {query}
+
+Dokumen yang tersedia:
+{all_formatted}
+
+Instruksi:
+1. Analisis setiap dokumen [1], [2], [3], dst.
+2. Tentukan dokumen mana yang **SECARA LANGSUNG atau PARSIAL** dapat menjawab pertanyaan
+3. MENJAWAB PARSIAL HANYA BERLAKU JIKA PERTANYAAN MERUPAKAN PERTANYAAN KOMPOSIT (NAMUN TIDAK BOLEH IMPLISIT HARUS EKSPLISIT) ATAU PERTANYAAN YANG SANGAT GENERAL dan KONTEN yang di sajikan rasanya dapat membantu menjawab pertanyaan secara sebagian
+4. Tolong jangan berbias di kolom rationale
+5. Khusus untuk Pertanyaan dosen jika general tolong hanya filter bagian yang sangat relevan:
+   - Tabel dosen teknik mesin dan industri FT UGM → jika menanyakan Mengenai Dosen secara general
+   - Tabel Kepala Laboratorium Departemen teknik mesin dan industri → Jika menanyakan hal2 yang terkait dengan laboratorium
+   - Tabel Professor Kepala laboratorium DTMI → Jika menanyakan mengenai Professor UGM
+   - Tabel dosen Pranatugas → Jika menanyakan mengenai Dosen Pranatugas
+   - Tabel Pengurus → ada spesifik antara (Sarjana, Magister dan Doktor) Jika memang tidak terdapat filter spesifik loloskan semua
+   - Tabel dosen != Tabel Professor
+6. Jika item merupakan sebuah tabel Lebih baik disampaikan secara list
+7. Berikan penjelasan detail mengapa dokumen dipilih atau tidak
+8. Output HARUS JSON valid dengan format:
+
+{{
+  "rationale": "penjelasan detail dokumen mana yang relevan dan mengapa (maks 3 kalimat)",
+  "ids": [1, 3, 5]
+}}
+
+PENTING: Output harus JSON valid tanpa markdown/backticks."""
+
+    prompt_message = HumanMessage(content=prompt)
+
     try:
-        json_match = re.search(r"\{.*\}", response_text, re.DOTALL)
+        # Single LLM call for all documents
+        response = await deps.llm.ainvoke([prompt_message])
+        response_text = str(response.content if hasattr(response, 'content') else response)
+
+        print(f"[BATCH RELEVANCE] Evaluated {len(docs_with_content)} documents")
+        print(f"[BATCH RELEVANCE] Response preview: {response_text[:200]}...")
+
+        # Parse JSON response (remove markdown if present)
+        json_string = response_text
+        json_string = re.sub(r'```json\n?', '', json_string)
+        json_string = re.sub(r'```\n?', '', json_string)
+        json_string = json_string.strip()
+
+        # Extract JSON object
+        json_match = re.search(r'\{.*\}', json_string, re.DOTALL)
         if not json_match:
-            raise ValueError("no json found in response")
-        json_str = json_match.group(0)
-        result = json.loads(json_str)
-        is_relevant = result.get("is_relevant", False)
-        explanation = result.get("explanation", "")
-        return is_relevant, explanation
+            raise ValueError("No JSON found in response")
+
+        parsed = json.loads(json_match.group(0))
+
+        result = BatchRelevanceResponse(
+            rationale=parsed.get("rationale", ""),
+            ids=parsed.get("ids", [])
+        )
+
+        print(f"[BATCH RELEVANCE] Selected {len(result.ids)} relevant documents: {result.ids}")
+        print(f"[BATCH RELEVANCE] Rationale: {result.rationale}")
+
+        return result
+
     except (json.JSONDecodeError, ValueError, KeyError, Exception) as e:
-        print(f"[RELEVANCE ERROR] Failed to parse relevance response: {e}")
-        # print(f"[RELEVANCE ERROR] Raw response: {response_text}")
-        # Fallback - mark as not relevant with fallback message
-        return False, "Mohon maaf, data sedang tidak tersedia. Mohon hubungi pengelola."
+        print(f"[BATCH RELEVANCE ERROR] Failed to parse response: {e}")
+        print(f"[BATCH RELEVANCE ERROR] Raw response: {response_text if 'response_text' in locals() else 'N/A'}")
+
+        # Fallback: Return all document IDs on error
+        all_ids = list(range(1, len(docs_with_content) + 1))
+        return BatchRelevanceResponse(
+            rationale=f"Error in evaluation, returning all documents. Error: {str(e)}",
+            ids=all_ids
+        )
 
 
-async def evaluate_relevance(deps: FilterServiceDeps, docs_to_process: List[Tuple], query: str) -> List[Tuple]:
-    if not docs_to_process:
+def filter_docs_by_ids(
+    docs_with_content: List[Tuple[Document, str]],
+    evaluation: BatchRelevanceResponse
+) -> List[Tuple[Document, float]]:
+    """
+    Filter documents by relevant IDs from batch evaluation
+
+    Args:
+        docs_with_content: List of (Document, content_string) tuples with 1-based indexing
+        evaluation: BatchRelevanceResponse with ids=[1, 3, 5]
+
+    Returns:
+        List of (Document, score) tuples for relevant documents only
+    """
+    if not evaluation.ids:
+        print("[FILTER WARNING] No relevant IDs selected, returning empty list")
         return []
-    cache_results, uncached = [], []
-    for doc, score in docs_to_process:
-        cache_key = get_cache_key(doc, query)
-        cached_result = deps.relevance_cache.get(cache_key)
-        if cached_result is not None:
-            if cached_result:
-                cache_results.append((doc, score))
-        else:
-            uncached.append((doc, score))
-    if not uncached:
-        return cache_results
-    sem = asyncio.Semaphore(16)
 
-    async def eval_one(doc: Document, score: float):
-        async with sem:
-            relevant, explanation = await asyncio.wait_for(batch_relevance_check(deps, doc, query), timeout=15)
-            cache_key = get_cache_key(doc, query)
-            deps.relevance_cache[cache_key] = relevant
+    filtered = []
+    for idx, (doc, _) in enumerate(docs_with_content, start=1):
+        if idx in evaluation.ids:
+            score = float(doc.metadata.get('score', 0.0))
+            filtered.append((doc, score))
 
-            if relevant:
-                doc.metadata['explanation'] = explanation
-                return (doc, score)
-            return None
-    eval_results = await asyncio.gather(*[eval_one(doc, score) for doc, score in uncached])
-    valid_results = [result for result in eval_results if result is not None]
-    return cache_results + valid_results
+    print(f"[FILTER] Filtered {len(filtered)}/{len(docs_with_content)} documents")
+
+    return filtered

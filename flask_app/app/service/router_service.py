@@ -33,26 +33,32 @@ TUGAS: Tentukan apakah pertanyaan butuh RAG (pencarian knowledge base) atau tida
 
 ATURAN:
 
-ACTION "rag" - Gunakan jika pertanyaan tentang domain DTMI
+ACTION "rag" - Gunakan jika pertanyaan tentang domain akademik/kampus
 (informasi spesifik yang membutuhkan data dari knowledge base)
+PENTING: Gunakan RAG bahkan jika pertanyaan menggunakan objek umum/general (misal: "berapa bisa diambil?", "kapan deadline?")
+Sistem RAG akan mencari dokumen yang relevan berdasarkan konteks.
 
-ACTION "no_rag" - Gunakan untuk:
-- Sapaan dan basa-basi
-- Ucapan terima kasih
-- Chitchat umum
-- Pertanyaan yang butuh klarifikasi (ambigu/tidak jelas)
+ACTION "no_rag" - HANYA gunakan untuk:
+- Sapaan dan basa-basi (halo, hi, terima kasih)
+- Chitchat umum yang tidak ada hubungannya dengan akademik
+- Pertanyaan yang BENAR-BENAR tidak bisa dijawab tanpa info esensial yang hilang
+
+KAPAN MINTA KLARIFIKASI:
+- HANYA jika pertanyaan benar-benar tidak ada konteks sama sekali dan tidak mungkin dicari
+- Contoh butuh klarifikasi: "bagaimana caranya?" (cara apa? tidak ada hint)
+- Contoh TIDAK butuh klarifikasi: "berapa bisa diambil?" (bisa dicari dengan keyword "maksimal diambil")
 
 UNTUK ACTION "rag", buat 2 versi query:
 
-1. expanded_query: Pertanyaan lengkap dan formal dengan konteks dari percakapan sebelumnya
-   Contoh: "kalau untuk S2?" → "Apa persyaratan untuk program Magister S2 di DTMI?"
+1. expanded_query: Pertanyaan yang lebih jelas dengan konteks dari percakapan (jika ada)
+   PENTING: JANGAN tambahkan "di DTMI" atau "DTMI" di akhir query
+   Contoh: "kalau untuk S2?" → "Apa persyaratan untuk program Magister S2?"
+   Contoh: "berapa bisa diambil?" → "Berapa yang bisa diambil?"
 
-2. rag_optimized_query: Kata kunci untuk pencarian (hapus kata tanya dan stop words, expand singkatan)
+2. rag_optimized_query: Kata kunci untuk pencarian (hapus kata tanya, expand singkatan)
    Contoh: "Berapa SKS yang bisa diambil?" → "SKS maksimal diambil"
    Contoh: "matkul apa yang wajib?" → "mata kuliah wajib"
-
-UNTUK ACTION "no_rag" dengan klarifikasi:
-- Berikan "what_to_clarify" jika pertanyaan ambigu
+   Contoh: "berapa bisa diambil?" → "maksimal diambil"
 
 FORMAT OUTPUT: JSON
 {
@@ -65,13 +71,17 @@ FORMAT OUTPUT: JSON
 CONTOH:
 Query: "kalau untuk S2?"
 Context: Sebelumnya tanya S1
-Output: {"action": "rag", "expanded_query": "Apa persyaratan untuk program Magister S2 di DTMI?", "rag_optimized_query": "persyaratan Magister S2"}
+Output: {"action": "rag", "expanded_query": "Apa persyaratan untuk program Magister S2?", "rag_optimized_query": "persyaratan Magister S2"}
 
 Query: "halo"
 Output: {"action": "no_rag"}
 
 Query: "berapa bisa diambil?"
-Output: {"action": "no_rag", "what_to_clarify": "Apakah maksudnya berapa SKS yang bisa diambil?"}
+Output: {"action": "rag", "expanded_query": "Berapa yang bisa diambil?", "rag_optimized_query": "maksimal diambil"}
+
+Query: "bagaimana caranya?"
+Context: Tidak ada percakapan sebelumnya
+Output: {"action": "no_rag", "what_to_clarify": "Cara untuk apa yang dimaksud?"}
 """
 
         print(f"[ROUTER INIT] RouterAgent initialized with nano LLM")
