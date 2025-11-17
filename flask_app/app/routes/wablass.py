@@ -75,6 +75,7 @@ async def webhook_endpoint():
             vectorstore=current_app.vector_db,
             llm=current_app.agent,
             wablass_agent=current_app.wablass_agent,
+            router_agent=current_app.router_agent,
         )
         # Just await; DO NOT mess with the event loop
         result = await service.generate_answer(

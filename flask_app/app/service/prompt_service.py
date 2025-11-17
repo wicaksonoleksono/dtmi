@@ -10,10 +10,11 @@ from ..decorators import handle_service_errors, validate_inputs
 class PromptService(IPromptBuilder):
     """
     Single Responsibility: Building prompts for different scenarios
+    Domain context is now handled by system prompts in agents
     """
 
-    def __init__(self, domain_context: str):
-        self.domain_context = domain_context
+    def __init__(self):
+        pass
 
     @handle_service_errors(service_name="PromptService")
     @validate_inputs(required_params=['query'])

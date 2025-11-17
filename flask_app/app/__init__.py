@@ -4,6 +4,8 @@ from .config import Config
 from .commands import register_commands
 from .routes import wablas_bp, stream_bp
 from .service.chat_history import get_history
+from .service.system_prompts import SystemPrompts
+from .service.router_service import RouterAgent
 
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_chroma import Chroma
@@ -54,21 +56,22 @@ def create_app() -> Flask:
     missing = [k for k in required if not app.config.get(k)]
     if missing:
         raise ValueError(f"Missing required config keys: {', '.join(missing)}")
-    # LLMs
-    STREAM_SYSTEM_PREPROMPT = SystemMessage(content="""
-    Kamu adalah **Tasya** alias Tanya Saya  asisten milik DTMI UGM 
-    DTMI singkatan dari Departemen Teknik mesin dan Industri 
-    TI adalah Teknik Industri TM adalah Teknik Mesin
-    Kamu digunakan Untuk Membantu dosen maupun mahasiswa untuk menjawab informasi terkait administrasi dan informasi 
-    DTMI dengan RAG ( Jangan dibilang secara eksplisit)
-                            
-    1. Jangan jawab pertanyaan umum seperti politik/sara, arahkan ke topik DTMI
-    2. Tangani Basa basi dengan baik
-    3. Gunakan konteks percakapan untuk jawaban yang berkesinambungan dan natural
-    4. Jangan melakukan pencarian eksternal
-    5. Berikan jawaban yang membantu dan relevan
-                                     
-    jika merupakan pertanyaan dengan konteks KLNTEKS RAG maka jawab 
+    # =============================================================================
+    # LLMs - Create all LLM instances
+    # =============================================================================
+
+    # Router LLM - nano model for cost-efficient routing
+    router_llm = ChatOpenAI(
+        api_key=app.config["OPENAI_API_KEY"],
+        model="gpt-4.1-nano-2025-04-14",
+        temperature=0,
+        streaming=False,
+    )
+
+    # System prompts from SystemPrompts
+    STREAM_SYSTEM_PREPROMPT = SystemMessage(content=SystemPrompts.DTMI_DOMAIN + """
+
+    jika merupakan pertanyaan dengan konteks KONTEKS RAG maka jawab:
 
     1. Jawab dengan informatif dan detil namun mudah dipahami
     2. Gunakan informasi dari context di atas
@@ -77,15 +80,14 @@ def create_app() -> Flask:
     5. PENTING: Jika tidak ada konteks yang relevan, jangan menggunakan general knowledge, cukup jawab:
     "Mohon maaf, data tidak ditemukan. Silakan hubungi administrasi DTMI UGM 🙏"
     6. Gunakan format yang baik dan tepat
-    
-    
     """)
 
-    WABLASS_SYSTEM_PREPROMPT = SystemMessage(content="""
-    Kamu adalah **Tasya** asisten DTMI UGM untuk WhatsApp Business.
+    WABLASS_SYSTEM_PREPROMPT = SystemMessage(content=SystemPrompts.DTMI_DOMAIN + """
+
+    Untuk WhatsApp Business:
     Berikan jawaban singkat, ramah, dan langsung to the point.
     Gunakan emoji yang sesuai dan bahasa yang casual tapi tetap informatif.
-    
+
     Jika tidak ada konteks yang relevan, jawab:
     "Maaf data tidak ditemukan 😅 Coba hubungi admin DTMI ya 📞"
     """)
@@ -98,14 +100,23 @@ def create_app() -> Flask:
         streaming=True,
     )
 
-    # Agent LLM - no system preprompt (fully agnostic)
+    # Agent LLM - for relevance checks and other tasks
     app.agent = ChatOpenAI(
         api_key=app.config["OPENAI_API_KEY"],
         model=app.config["OPENAI_MODEL"],
-        # model="gpt-4.1-nano-2025-04-14",
         temperature=0,
         streaming=False,
         seed=0,
+    )
+
+    # =============================================================================
+    # Agents - Create all agent instances with LLMs and system prompts
+    # =============================================================================
+
+    # RouterAgent - uses nano LLM with DTMI_DOMAIN
+    app.router_agent = RouterAgent(
+        llm=router_llm,
+        system_prompt=SystemPrompts.DTMI_DOMAIN
     )
 
     # WhatsApp Business LLM

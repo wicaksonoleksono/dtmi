@@ -1,34 +1,107 @@
+"""
+RouterAgent - Intelligent query routing
+Decides whether to use RAG or no-RAG based on query intent
+Instructions built internally, receives only LLM and base system prompt from __init__.py
+"""
+
 from typing import List, Dict
 import json
+import re
+from langchain_core.messages import SystemMessage, HumanMessage
 
 
 class RouterAgent:
-    def __init__(self, llm, dtmi_domain: str):
-        self.llm = llm
-        self.dtmi_domain = dtmi_domain
+    """
+    RouterAgent with routing instructions built internally
+    Receives LLM and base system prompt (DTMI_DOMAIN) from __init__.py
+    """
 
-    async def get_action(self, query: str, previous_conversation: List[str]) -> Dict[str, any]:
+    def __init__(self, llm, system_prompt: str):
         """
-        Unified RouterAgent with context-aware decision making:
-        1. Continuation detection + query expansion from conversation history
-        2. Single decision: RAG needed or not?
+        Initialize RouterAgent
+
+        Args:
+            llm: LLM instance (configured in __init__.py with nano model)
+            system_prompt: Base system prompt (DTMI_DOMAIN from SystemPrompts)
+        """
+        self.llm = llm
+        self.base_system_prompt = system_prompt
+
+        # Build routing instructions internally
+        self.routing_instructions = """
+TUGAS: Tentukan apakah pertanyaan butuh RAG (pencarian knowledge base) atau tidak.
+
+ATURAN:
+
+ACTION "rag" - Gunakan jika pertanyaan tentang domain DTMI
+(informasi spesifik yang membutuhkan data dari knowledge base)
+
+ACTION "no_rag" - Gunakan untuk:
+- Sapaan dan basa-basi
+- Ucapan terima kasih
+- Chitchat umum
+- Pertanyaan yang butuh klarifikasi (ambigu/tidak jelas)
+
+UNTUK ACTION "rag", buat 2 versi query:
+
+1. expanded_query: Pertanyaan lengkap dan formal dengan konteks dari percakapan sebelumnya
+   Contoh: "kalau untuk S2?" → "Apa persyaratan untuk program Magister S2 di DTMI?"
+
+2. rag_optimized_query: Kata kunci untuk pencarian (hapus kata tanya dan stop words, expand singkatan)
+   Contoh: "Berapa SKS yang bisa diambil?" → "SKS maksimal diambil"
+   Contoh: "matkul apa yang wajib?" → "mata kuliah wajib"
+
+UNTUK ACTION "no_rag" dengan klarifikasi:
+- Berikan "what_to_clarify" jika pertanyaan ambigu
+
+FORMAT OUTPUT: JSON
+{
+  "action": "rag" | "no_rag",
+  "expanded_query": "..." (jika rag),
+  "rag_optimized_query": "..." (jika rag),
+  "what_to_clarify": "..." (jika no_rag dan butuh klarifikasi)
+}
+
+CONTOH:
+Query: "kalau untuk S2?"
+Context: Sebelumnya tanya S1
+Output: {"action": "rag", "expanded_query": "Apa persyaratan untuk program Magister S2 di DTMI?", "rag_optimized_query": "persyaratan Magister S2"}
+
+Query: "halo"
+Output: {"action": "no_rag"}
+
+Query: "berapa bisa diambil?"
+Output: {"action": "no_rag", "what_to_clarify": "Apakah maksudnya berapa SKS yang bisa diambil?"}
+"""
+
+        print(f"[ROUTER INIT] RouterAgent initialized with nano LLM")
+
+    async def get_action(self, query: str, previous_conversation: List[str] = None) -> Dict[str, any]:
+        """
+        Route query to RAG or no-RAG
+        System prompt (domain + instructions) automatically prepended
+
+        Args:
+            query: User's current query
+            previous_conversation: List of previous messages in format ["Human: ...", "AI: ..."]
 
         Returns:
-        RAG Action:
-        {
-            "action": "rag",
-            "expanded_query": str,  # Full proper question for RAG prompt
-            "rag_optimized_query": str  # Search terms for vector DB
-        }
-        
-        No-RAG Action:
-        {
-            "action": "no_rag", 
-            "response": str,  # Direct response content
-            "what_to_clarify": str | None  # Present if clarification needed
-        }
+            RAG Action:
+            {
+                "action": "rag",
+                "expanded_query": str,  # Full proper question for RAG prompt
+                "rag_optimized_query": str  # Search terms for vector DB
+            }
+
+            No-RAG Action:
+            {
+                "action": "no_rag",
+                "what_to_clarify": str | None  # Present if clarification needed
+            }
         """
-        # Build context from previous conversation (human-AI pairs)
+        previous_conversation = previous_conversation or []
+
+        # Build context from previous conversation
         context_section = ""
         if previous_conversation:
             context_section = f"""
@@ -36,91 +109,28 @@ Percakapan Sebelumnya:
 {chr(10).join([f"- {msg}" for msg in previous_conversation])}
 """
 
-        router_prompt = f"""
-Kamu adalah RouterAgent dengan 2 aksi sederhana:
-Domain: 
-{self.dtmi_domain}
-
-{context_section}
+        # User message - just query + context
+        user_message = f"""{context_section}
 Query Saat Ini: "{query}"
-
-TUGAS:
-1. CONTEXT ANALYSIS: Analisis percakapan untuk memahami intent lengkap
-2. DECISION: Apakah butuh pencarian knowledge base (RAG) atau tidak?
-
-ATURAN KEPUTUSAN:
-- ACTION "rag": Butuh informasi spesifik DTMI (mata kuliah, dosen, kurikulum, persyaratan, dll)
-- ACTION "no_rag": Untuk sapaan, chitchat, clarification, atau general response
-
-KAPAN BUTUH CLARIFICATION (gunakan no_rag + what_to_clarify):
-- Istilah ambigu: "matkul" → clarify SKS vs mata kuliah, "program" → clarify S1/S2/S3
-- Pronoun tidak jelas: "itu", "yang lain" tanpa referent
-- Konteks hilang: "berapa bisa diambil?" tanpa subjek
-- Pertanyaan tidak lengkap: "bagaimana?" tanpa objek yang jelas
-- Angka tanpa konteks: "14 SKS bagaimana?" → apa aspek yang ditanyakan?
-- Skenario samar: "kalau misal..." tanpa pertanyaan spesifik
-- Nama tanpa klarifikasi: "Siapa ari" -> apakah yang dimaksud ari dosen atau siapa ?
-- Klarifikasi untuk menentukan apakah yang dimaksud spesifik terhadap ti atau tm atau dtmi atau secara general 
-- Pertanyaan secara gramatik tidak jelas 
-Kapan butuh no_rag tanpa clarification: 
-- Jika bisa dijawab berdasarkan konteks history atau bedasarkan general knowledge.. 
-RAG_OPTIMIZED_QUERY RULES (untuk rag action):
-- HAPUS semua kata tanya: berapa, siapa, kapan, dimana, bagaimana, apa, gimana
-- HAPUS stop words: yang, adalah, untuk, dengan, dari, ke, di, dalam, bisa, dapat
-- PERTAHANKAN kata kunci penting: SKS, IPK, mata kuliah, dosen, persyaratan, dll
-- Contoh: "Berapa SKS yang bisa diambil?" → "SKS diambil", "Siapa dosen TI?" → "dosen TI"
-
-SINGKATAN:
-TI → Teknik Industri, 
-TM → Teknik Mesin, 
-DTMI -> Departemen Teknik Mesin Dan Industri UGM 
-matkul → mata kuliah (clarify SKS?), 
-prof → professor, 
-tendik → tenaga pendidikan
-Tolong singkatan di perpanjang 
-KP -> Kerja Praktik
-
-CONTOH:
-Input: "kalau untuk S2?" (setelah "Apa persyaratan S1?")
-Output: {{
-  "action": "rag",
-  "expanded_query": "Apa persyaratan untuk program S2 Teknik Mesin?",
-  "rag_optimized_query": "persyaratan program S2 Teknik Mesin"
-}}
-
-Input: "Halo, apa kabar?"
-Output: {{
-  "action": "no_rag"
-}}
-
-Input: "kalo sy punya ipk 2.5 matkul yang sy bs ambil brapa?"
-Output: {{
-  "action": "no_rag",
-  "what_to_clarify": "Apakah yang dimaksud adalah SKS (Sistem Kredit Semester) yang bisa diambil dengan IPK 2.5?"
-}}
-
-Input: "kalau misal saya mengambil 14 SKS bagaimana?"
-Output: {{
-  "action": "no_rag",
-  "what_to_clarify": "Untuk 14 SKS, apa yang ingin Anda ketahui? Apakah tentang minimum IPK yang diperlukan, dampak terhadap beban studi, atau aspek lainnya?"
-}}
-
-** STRICT RULES **
-- JANGAN tambah kata kunci di luar pertanyaan untuk expanded_query dan rag_optimized_query
-- JANGAN tambah suffix "DTMI UGM" karena mengacaukan RAG
-- PERTAHANKAN kata tanya Bahasa Indonesia dalam rag_optimized_query
-
-FORMAT RESPONSE: JSON ketat
-
 """
 
-        response = await self.llm.ainvoke(router_prompt)
+        # Combine base system prompt + routing instructions
+        full_system_prompt = f"{self.base_system_prompt}\n\n{self.routing_instructions}"
+
+        # Build messages with system prompt
+        messages = [
+            SystemMessage(content=full_system_prompt),
+            HumanMessage(content=user_message)
+        ]
+
+        # Invoke LLM
+        response = await self.llm.ainvoke(messages)
         response_text = response.content if hasattr(response, 'content') else str(response)
-        print(response_text)
+
+        print(f"[ROUTER DEBUG] Response: {response_text[:200]}...")
+
         try:
             # Extract JSON from response
-            import re
-            import json
             json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
             if not json_match:
                 raise ValueError("No JSON found")
@@ -144,7 +154,7 @@ FORMAT RESPONSE: JSON ketat
             print(f"[ROUTER ERROR] Raw response: {response_text}")
             # Robust fallback - always use RAG with original query
             return {
-                "action": "rag",  # Safe fallback to RAG
+                "action": "rag",
                 "expanded_query": query,
                 "rag_optimized_query": query
             }

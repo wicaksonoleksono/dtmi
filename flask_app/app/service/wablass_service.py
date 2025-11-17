@@ -5,7 +5,6 @@ from typing import Dict, Any, List
 from langchain_core.messages import HumanMessage
 
 from .filter_service import FilterService
-from .router_service import RouterAgent
 from .prompt_service import PromptService
 from .chat_history import get_history
 
@@ -13,11 +12,12 @@ from .chat_history import get_history
 class WablassService:
     """Non-streaming service for Wablass WhatsApp integration"""
 
-    def __init__(self, static_dir: str, vectorstore, llm, wablass_agent):
+    def __init__(self, static_dir: str, vectorstore, llm, wablass_agent, router_agent):
         self.static_dir = static_dir
         self.vectorstore = vectorstore
         self.llm = llm
         self.wablass_agent = wablass_agent
+        self.router_agent = router_agent
 
     def get_msg_hist(self, session_id: str) -> List[str]:
         """
@@ -54,25 +54,8 @@ class WablassService:
     ) -> Dict[str, Any]:
         """Generate answer using the same pipeline as stream_query but non-streaming"""
 
-        DTMI_DOMAIN = """
-        Domain mencakup:
-        - Detail mata kuliah (nama, kode, SKS, prasyarat)
-        - Peminatan mata kuliah
-        - Capaian pembelajaran spesifik
-        - Jadwal perkuliahan dan ujian tertentu
-        - Prosedur akademik dan administrasi resmi
-        - Data dosen dan staff (nama, jabatan, kepakaran)
-        - Data dosen jika terdengar seperti nama indonesia maka gunakan rag
-        - Struktur kurikulum dan silabus detail
-        - Persyaratan kelulusan program studi
-        - Program beasiswa spesifik DTMI
-        - Fasilitas kampus DTMI
-        - Kegiatan akademik DTMI
-        - Data umum yang berkaitan dengan jogjakarta dan UGM
-        """
-
         # Initialize services
-        router = RouterAgent(self.llm, DTMI_DOMAIN)
+        router = self.router_agent
         filter_service = FilterService(
             static_dir=self.static_dir,
             vectorstore=self.vectorstore,
@@ -80,7 +63,7 @@ class WablassService:
             context_expansion_window=context_expansion_window,
             max_workers=8
         )
-        prompt_service = PromptService(DTMI_DOMAIN)
+        prompt_service = PromptService()
 
         try:
             # Step 1: Routing decision with conversation context

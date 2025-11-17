@@ -5,7 +5,7 @@ import asyncio
 import json
 import re
 from typing import List
-from ..service import RouterAgent, FilterService, StreamHandler, MetadataService, PromptService, ValidationService
+from ..service import FilterService, StreamHandler, MetadataService, PromptService, ValidationService
 from ..service.chat_history import get_history
 stream_bp = Blueprint('stream', __name__, url_prefix='/api')
 
@@ -67,35 +67,15 @@ def query():
     # Extract validated parameters
     query = validated_params['query']
     query_types = validated_params['query_types']
-    year = validated_params['year'] 
+    year = validated_params['year']
     top_k = validated_params['top_k']
     context_expansion_window = validated_params['context_expansion_window']
-    DTMI_DOMAIN = """
-    Domain mencakup:
-    - Detail mata kuliah (nama, kode, SKS, prasyarat)
-    - Peminatan mata kuliah
-    - Capaian pembelajaran spesifik
-    - Jadwal perkuliahan dan ujian tertentu
-    - Prosedur akademik dan administrasi resmi
-    - Data dosen dan staff (nama, jabatan, kepakaran)
-    - Data dosen jika terdengar seperti nama indonesia maka gunakan rag
-    - Struktur kurikulum dan silabus detail
-    - Persyaratan kelulusan program studi
-    - Program beasiswa spesifik
-    - Fasilitas kampus
-    - Kegiatan akademik
-    - Data umum yang berkaitan dengan jogjakarta dan UGM
-    - IP INDEKS PRESTASI DAN IPK (INDESK PRESTASI KUMULATIF)
-    - BEASISWA
-    PADA DTMI UGM Departemen Teknik Mesin dan Teknik Industri
-
-    """
 
     def generate_stream():
         try:
             # Initialize services
             context_expansion_window=current_app.config["DEFAULT_CONTEXT_EXPANSION_WINDOW"]
-            router = RouterAgent(current_app.agent, DTMI_DOMAIN)
+            router = current_app.router_agent
             filter_service = FilterService(
                 static_dir=current_app.static_folder,
                 vectorstore=current_app.vector_db,
@@ -105,7 +85,7 @@ def query():
             )
             stream_handler = StreamHandler(current_app.stream_agent)
             metadata_service = MetadataService()
-            prompt_service = PromptService(DTMI_DOMAIN)
+            prompt_service = PromptService()
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             try:
