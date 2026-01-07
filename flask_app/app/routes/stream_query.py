@@ -66,7 +66,8 @@ def query():
     
     # Extract validated parameters
     query = validated_params['query']
-    query_types = validated_params['query_types']
+    # query_types = validated_params['query_types']
+    query_types = "all"
     year = validated_params['year']
     top_k = validated_params['top_k']
     context_expansion_window = validated_params['context_expansion_window']

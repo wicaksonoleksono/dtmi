@@ -76,8 +76,10 @@ Dokumen yang tersedia:
 Instruksi:
 1. Analisis setiap dokumen [1], [2], [3], dst.
 2. Tentukan dokumen mana yang **SECARA LANGSUNG atau PARSIAL** dapat menjawab pertanyaan
-3. MENJAWAB PARSIAL HANYA BERLAKU JIKA PERTANYAAN MERUPAKAN PERTANYAAN KOMPOSIT (NAMUN TIDAK BOLEH IMPLISIT HARUS EKSPLISIT) ATAU PERTANYAAN YANG SANGAT GENERAL dan KONTEN yang di sajikan rasanya dapat membantu menjawab pertanyaan secara sebagian
+3.  MENJAWAB PARSIAL HANYA BERLAKU JIKA PERTANYAAN MERUPAKAN PERTANYAAN KOMPOSIT ATAU PERTANYAAN YANG SANGAT GENERAL dan KONTEN 
+    yang di sajikan rasanya dapat membantu menjawab pertanyaan secara sebagian
 4. Tolong jangan berbias di kolom rationale
+5. Boleh terjawab secara implisit namun jika implisit pastikan konteks dapat terjawab.
 5. Khusus untuk Pertanyaan dosen jika general tolong hanya filter bagian yang sangat relevan:
    - Tabel dosen teknik mesin dan industri FT UGM → jika menanyakan Mengenai Dosen secara general
    - Tabel Kepala Laboratorium Departemen teknik mesin dan industri → Jika menanyakan hal2 yang terkait dengan laboratorium

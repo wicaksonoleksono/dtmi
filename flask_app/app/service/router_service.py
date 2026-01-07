@@ -29,59 +29,61 @@ class RouterAgent:
 
         # Build routing instructions internally
         self.routing_instructions = """
-TUGAS: Tentukan apakah pertanyaan butuh RAG (pencarian knowledge base) atau tidak.
+TUGAS: Tentukan apakah query butuh RAG atau tidak. SIMPLE.
 
-ATURAN:
+3 KEMUNGKINAN:
+1. "rag" - Pertanyaan akademik/kampus (gunakan knowledge base)
+2. "no_rag" dengan needs_clarification=true - Query tidak jelas, butuh klarifikasi
+3. "no_rag" dengan needs_clarification=false - Chitchat biasa (halo, terima kasih, dll)
 
-ACTION "rag" - Gunakan jika pertanyaan tentang domain akademik/kampus
-(informasi spesifik yang membutuhkan data dari knowledge base)
-PENTING: Gunakan RAG bahkan jika pertanyaan menggunakan objek umum/general (misal: "berapa bisa diambil?", "kapan deadline?")
-Sistem RAG akan mencari dokumen yang relevan berdasarkan konteks.
+ATURAN SEDERHANA:
 
-ACTION "no_rag" - HANYA gunakan untuk:
-- Sapaan dan basa-basi (halo, hi, terima kasih)
-- Chitchat umum yang tidak ada hubungannya dengan akademik
-- Pertanyaan yang BENAR-BENAR tidak bisa dijawab tanpa info esensial yang hilang
+ACTION "rag":
+- DEFAULT untuk SEMUA pertanyaan akademik
+- Jika ada konteks percakapan, gunakan untuk expand query
+- JANGAN tambahkan "di DTMI" atau "DTMI" di akhir query
 
-KAPAN MINTA KLARIFIKASI:
-- HANYA jika pertanyaan benar-benar tidak ada konteks sama sekali dan tidak mungkin dicari
-- Contoh butuh klarifikasi: "bagaimana caranya?" (cara apa? tidak ada hint)
-- Contoh TIDAK butuh klarifikasi: "berapa bisa diambil?" (bisa dicari dengan keyword "maksimal diambil")
+Buat 2 versi:
+- expanded_query: Query yang lebih jelas (gunakan konteks jika ada)
+- rag_optimized_query: Kata kunci untuk search
 
-UNTUK ACTION "rag", buat 2 versi query:
+ACTION "no_rag" dengan needs_clarification=true:
+- HANYA jika query SANGAT tidak jelas DAN tidak ada konteks
+- Contoh: "bagaimana?" (tanpa konteks), "apa itu?" (tanpa konteks)
 
-1. expanded_query: Pertanyaan yang lebih jelas dengan konteks dari percakapan (jika ada)
-   PENTING: JANGAN tambahkan "di DTMI" atau "DTMI" di akhir query
-   Contoh: "kalau untuk S2?" → "Apa persyaratan untuk program Magister S2?"
-   Contoh: "berapa bisa diambil?" → "Berapa yang bisa diambil?"
+ACTION "no_rag" dengan needs_clarification=false:
+- Sapaan: halo, hi, terima kasih
+- Chitchat: bagaimana kabarmu?, siapa kamu?
 
-2. rag_optimized_query: Kata kunci untuk pencarian (hapus kata tanya, expand singkatan)
-   Contoh: "Berapa SKS yang bisa diambil?" → "SKS maksimal diambil"
-   Contoh: "matkul apa yang wajib?" → "mata kuliah wajib"
-   Contoh: "berapa bisa diambil?" → "maksimal diambil"
+FORMAT OUTPUT (JSON):
 
-FORMAT OUTPUT: JSON
-{
-  "action": "rag" | "no_rag",
-  "expanded_query": "..." (jika rag),
-  "rag_optimized_query": "..." (jika rag),
-  "what_to_clarify": "..." (jika no_rag dan butuh klarifikasi)
-}
+RAG:
+{"action": "rag", "expanded_query": "...", "rag_optimized_query": "..."}
+
+No-RAG dengan klarifikasi:
+{"action": "no_rag", "needs_clarification": true}
+
+No-RAG chitchat:
+{"action": "no_rag", "needs_clarification": false}
 
 CONTOH:
-Query: "kalau untuk S2?"
-Context: Sebelumnya tanya S1
-Output: {"action": "rag", "expanded_query": "Apa persyaratan untuk program Magister S2?", "rag_optimized_query": "persyaratan Magister S2"}
+
+Query: "dimana bpa tahun 2025?"
+{"action": "rag", "expanded_query": "Dimana BPA tahun 2025?", "rag_optimized_query": "BPA 2025"}
+
+Query: "Dokumen nya"
+Context: "Human: dimana bpa tahun 2025?"
+{"action": "rag", "expanded_query": "Dokumen BPA tahun 2025", "rag_optimized_query": "dokumen BPA 2025"}
 
 Query: "halo"
-Output: {"action": "no_rag"}
+{"action": "no_rag", "needs_clarification": false}
 
-Query: "berapa bisa diambil?"
-Output: {"action": "rag", "expanded_query": "Berapa yang bisa diambil?", "rag_optimized_query": "maksimal diambil"}
+Query: "bagaimana?"
+Context: Tidak ada
+{"action": "no_rag", "needs_clarification": true}
 
-Query: "bagaimana caranya?"
-Context: Tidak ada percakapan sebelumnya
-Output: {"action": "no_rag", "what_to_clarify": "Cara untuk apa yang dimaksud?"}
+Query: "LAB teknik mesin"
+{"action": "rag", "expanded_query": "Laboratorium teknik mesin", "rag_optimized_query": "laboratorium teknik mesin"}
 """
 
         print(f"[ROUTER INIT] RouterAgent initialized with nano LLM")

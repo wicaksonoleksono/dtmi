@@ -1,11 +1,6 @@
-"""
-SOLID Prompt Service - Single Responsibility for Prompt Building
-"""
-
 from typing import Optional
 from ..model import IPromptBuilder
 from ..decorators import handle_service_errors, validate_inputs
-
 
 class PromptService(IPromptBuilder):
     """
@@ -26,11 +21,18 @@ class PromptService(IPromptBuilder):
         # Fallback for empty or None context
         if not retrieved_content or not retrieved_content.strip():
             return f"""Query: ${query}$
-
-PENTING: Tidak ada konteks yang relevan ditemukan dengan kueri. Jawab dengan:
-Jika dapat dijawab dengan general knowledge maka Bisa jawab secara general
-"Mohon maaf, data tidak ditemukan. Silakan hubungi administrasi DTMI UGM 🙏"
-"""
+Jika data yang diminta tidak ditemukan, jawab:
+- "Data tidak dapat ditemukan, namun terdapat informasi yang mungkin relevan."
+Jika benar-benar tidak ada, jawab:
+- "Data tidak dapat ditemukan. Silakan hubungi administrasi DTMI UGM untuk informasi lebih lanjut."
+Jika pertanyaan mengandung link, jawab juga bahwa Anda tidak dapat mengakses internet.
+Jika data prosedural atau dokumen tidak ditemukan, Anda boleh mencantumkan referensi kemudian Untuk pertanyaan terkait Dokumen BPA,:
+intip.in/softfiledtmi
+Untuk pertanyaan yang bersifat general, Anda boleh menjawab,
+namun harus memberi disclaimer:
+"Jawaban ini berdasarkan informasi umum, bukan data internal DTMI UGM."
+Jangan mengarang jawaban dan jangan memberikan informasi yang tidak didukung data.
+            """
         
         return f"""
 _______________KONTEKS RAG________________________________
@@ -50,10 +52,7 @@ Query: ${query}$
         if what_to_clarify:
             return f"""Pengguna menanyakan: {original_query}
 Hal yang perlu di klarifikasi: {what_to_clarify}
-
 Berikan respons klarifikasi yang ramah dan membantu."""
-        
-        # For general knowledge, just return original query
         return original_query
 
     @handle_service_errors(service_name="PromptService")

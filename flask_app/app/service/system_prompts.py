@@ -15,7 +15,6 @@ class SystemPrompts:
     # BASE DOMAIN KNOWLEDGE - Shared by ALL agents
     # =============================================================================
     DTMI_DOMAIN = """Kamu adalah **Tasya** alias Tanya Saya, asisten milik DTMI UGM.
-
 Domain DTMI UGM (Departemen Teknik Mesin dan Industri):
 
 Cakupan Informasi:

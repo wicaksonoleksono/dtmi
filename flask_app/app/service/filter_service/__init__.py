@@ -61,49 +61,38 @@ class FilterService:
             self.context_expansion_window = max(1, int(context_expansion_window))
 
         deps = self._get_deps()
-
         # Step 1: Vector search
         where, _ = build_filter(query_types, year)
         raw_hits = await similarity_search(deps, query, top_k, where)
         print(f"[FILTER DEBUG] Found {len(raw_hits)} raw hits")
         if not raw_hits:
             raise ValueError(f"RAG ERROR: No hits found for query '{query}' with filter {where}")
-
         groups = group_by_modality(raw_hits)
-
         # Step 2: Expand TEXT docs, keep others as-is
         all_docs: List[tuple[Document, float]] = []
         if Filter.TEXT.value in groups:
             text_docs = [doc for doc, _ in groups[Filter.TEXT.value]]
             expanded_docs = await batch_expand_text(deps, text_docs)
             all_docs.extend([(doc, float(doc.metadata.get('score', 0.0))) for doc in expanded_docs])
-
         for t, arr in groups.items():
             if t != Filter.TEXT.value:
                 all_docs.extend(arr)
-
         if not all_docs:
             raise ValueError("No documents after expansion")
-
         print(f"[FILTER DEBUG] After expansion: {len(all_docs)} docs")
-
         # Step 3: Build PREVIEW content for ALL docs (include_full_table=False to save tokens)
         docs_only = [doc for doc, _ in all_docs]
         preview_contents = await batch_build_content(deps, docs_only, include_full_table=False)
         docs_with_preview = list(zip(docs_only, preview_contents))
-
         print(f"[FILTER DEBUG] Built preview content for {len(docs_with_preview)} docs")
-
         # Step 4: BATCH relevance check (1 LLM call for ALL documents)
         relevance_evaluation = await batch_relevance_check(
             deps,
             docs_with_preview,
             relevance_query or query
         )
-
         print(f"[FILTER DEBUG] Batch relevance: {relevance_evaluation.rationale}")
         print(f"[FILTER DEBUG] Selected IDs: {relevance_evaluation.ids}")
-
         # Step 5: Filter docs by relevant IDs
         relevant_docs = filter_docs_by_ids(docs_with_preview, relevance_evaluation)
 
@@ -119,9 +108,7 @@ class FilterService:
                 'query_type_used': query_types,
                 'filter_message': f"No relevant documents found. Filter: {where}",
             }
-
         print(f"[FILTER DEBUG] After batch relevance: {len(relevant_docs)} relevant docs")
-
         # Step 6: Deduplicate by csv_path/id
         seen, deduped = set(), []
         for doc, score in relevant_docs:
@@ -131,20 +118,16 @@ class FilterService:
                 deduped.append((doc, score))
 
         print(f"[FILTER DEBUG] After first dedup: {len(deduped)} docs")
-
         # Step 7: Rebuild FULL content for filtered docs ONLY (include_full_table=True)
         docs_filtered = [d for d, _ in deduped]
         full_contents = await batch_build_content(deps, docs_filtered, include_full_table=True)
         docs_with_full_content = list(zip(docs_filtered, full_contents))
-
         print(f"[FILTER DEBUG] Rebuilt FULL content for {len(docs_with_full_content)} relevant docs")
-
         # Step 8: Final deduplication + extract metadata
         all_texts, all_metadatas, image_paths, csv_paths = batch_deduplicate(docs_with_full_content)
         image_paths = [(os.path.join(self.static_dir, p), caption) for p, caption in image_paths]
         csv_paths = [(os.path.join(self.static_dir, p), caption) for p, caption in csv_paths]
         combined_context = "\n\n".join(all_texts)
-
         print(f"[FILTER DEBUG] Final: {len(all_texts)} text blocks, {len(image_paths)} images, {len(csv_paths)} CSVs")
 
         return {
