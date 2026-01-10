@@ -1,5 +1,4 @@
 .env
-db
 venv
 legacy
 ./venv
@@ -14,3 +13,5 @@ chunk/
 chunk.v2/
 venv.*
 docs
+log
+.claude

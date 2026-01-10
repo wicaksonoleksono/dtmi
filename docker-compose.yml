@@ -1,0 +1,16 @@
+services:
+  flask-app:
+    build: .
+    container_name: ${FLASK_CONTAINER_NAME}
+    env_file:
+      - .env
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    name: ${NETWORK_NAME}
+    driver: bridge
