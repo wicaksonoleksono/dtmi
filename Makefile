@@ -1,3 +1,5 @@
+DTMI_PATH := /var/www/html/dtmi
+
 include .env
 export
 
@@ -87,10 +89,11 @@ prod-down: down db-down
 	@echo "Prod stopped!"
 
 nginx-install:
+	sudo mkdir -p $(DTMI_PATH)
 	sudo cp nginx.conf /etc/nginx/sites-available/dtmi
 	sudo ln -sf /etc/nginx/sites-available/dtmi /etc/nginx/sites-enabled/dtmi
-	sudo cp backsoon.html /var/www/html/dtmi/backsoon.html
-	@echo "Nginx config installed"
+	sudo cp backsoon.html $(DTMI_PATH)/backsoon.html
+	@echo "Nginx config installed to $(DTMI_PATH)"
 
 nginx-reload:
 	sudo nginx -t && sudo systemctl reload nginx
