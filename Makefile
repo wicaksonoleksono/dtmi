@@ -1,6 +1,6 @@
 DTMI_PATH := /var/www/html/dtmi
 
-include .env
+include $(DTMI_PATH)/.env
 export
 
 .PHONY: help build up down logs shell restart clean db-up db-down db-logs db-shell dev-up dev-down prod-up prod-down nginx-install nginx-reload
