@@ -1,12 +1,20 @@
 include .env
 export
 
-.PHONY: help build up down logs shell restart clean db-up db-down db-logs db-shell all-up all-down
+.PHONY: help build up down logs shell restart clean db-up db-down db-logs db-shell dev-up dev-down prod-up prod-down
 
 help:
 	@echo "Optima Flask App - Docker Commands"
 	@echo ""
 	@echo "Usage: make [target]"
+	@echo ""
+	@echo "Development:"
+	@echo "  dev-up     - Start in dev mode (hot reload)"
+	@echo "  dev-down   - Stop dev containers"
+	@echo ""
+	@echo "Production:"
+	@echo "  prod-up    - Start in prod mode (no reload)"
+	@echo "  prod-down  - Stop prod containers"
 	@echo ""
 	@echo "Flask App:"
 	@echo "  build      - Build the Flask app image"
@@ -22,10 +30,6 @@ help:
 	@echo "  db-down    - Stop ChromaDB container"
 	@echo "  db-logs    - View ChromaDB logs"
 	@echo "  db-shell   - Open shell in ChromaDB container"
-	@echo ""
-	@echo "Full Stack:"
-	@echo "  all-up     - Start ChromaDB + Flask app"
-	@echo "  all-down   - Stop all containers"
 
 build:
 	docker compose build
@@ -60,10 +64,20 @@ db-logs:
 db-shell:
 	docker compose -f docker-compose.chromadb.yml exec chromadb /bin/sh
 
-all-up: db-up up
-	@echo "All services started!"
+dev-up: db-up
+	docker compose up -d
+	@echo "Dev mode started (hot reload enabled)"
 	@echo "  - ChromaDB: http://localhost:$(CHROMA_EXTERNAL_PORT)"
 	@echo "  - App: http://localhost:$(APP_PORT)"
 
-all-down: down db-down
-	@echo "All services stopped!"
+dev-down: down db-down
+	@echo "Dev stopped!"
+
+prod-up: db-up
+	docker compose -f docker-compose.yml up -d
+	@echo "Prod mode started"
+	@echo "  - ChromaDB: http://localhost:$(CHROMA_EXTERNAL_PORT)"
+	@echo "  - App: http://localhost:$(APP_PORT)"
+
+prod-down: down db-down
+	@echo "Prod stopped!"

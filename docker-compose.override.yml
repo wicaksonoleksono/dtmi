@@ -1,0 +1,7 @@
+# Dev mode - auto-loaded by docker compose
+# Delete or rename this file for production
+services:
+  flask-app:
+    volumes:
+      - .:/app
+    command: hypercorn ${APP_MODULE} --bind 0.0.0.0:${APP_PORT} --workers 1 --reload
