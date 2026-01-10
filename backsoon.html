@@ -1,26 +1,102 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-<title>Site Maintenance</title>
-<meta charset="utf-8"/>
-<meta name="robots" content="noindex"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-  body { text-align: center; padding: 150px; }
-  h1 { font-size: 50px; }
-  body { font: 20px Helvetica, sans-serif; color: #333; }
-  article { display: block; text-align: left; width: 650px; margin: 0 auto; }
-  a { color: #dc8100; text-decoration: none; }
-  a:hover { color: #333; text-decoration: none; }
-</style>
+  <meta charset="utf-8" />
+  <meta name="robots" content="noindex" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Site Maintenance</title>
+
+  <style>
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      color:#222;
+      background:#fff;
+    }
+
+    /* full width, only 50px side padding */
+    .wrap{
+      min-height:100vh;
+      padding: 0 50px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .row{
+      width:100%;
+      max-width: 1400px;
+      display:flex;
+      align-items:center;
+      justify-content:center;  /* keeps the whole block centered */
+      gap:56px;
+    }
+
+    /* big image */
+    .hero{
+      width: 58vw;
+      max-width: 980px;
+      height:auto;
+      display:block;
+    }
+
+    /* centered text block, no left alignment */
+    .text{
+      text-align:center;
+      max-width: 520px;
+    }
+
+    h1{
+      margin:0 0 14px;
+      font-size: 64px;
+      line-height:1.05;
+      font-weight: 700;
+    }
+
+    p{
+      margin:0 0 16px;
+      font-size: 22px;
+      line-height:1.45;
+      color:#555;
+    }
+
+    /* reduce wrapping a lot (still wraps if screen is small) */
+    .text p{
+      max-width: 480px;
+      margin-left:auto;
+      margin-right:auto;
+    }
+
+    a{ color:#dc8100; text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+
+    .sig{ margin-top: 18px; color:#777; font-size: 18px; }
+
+    @media (max-width: 980px){
+      .wrap{ padding: 24px; }
+      .row{ flex-direction:column; gap:24px; }
+      .hero{ width: min(820px, 100%); }
+      .text{ max-width: 720px; }
+      h1{ font-size: 44px; }
+      p{ font-size: 18px; }
+      .sig{ font-size: 16px; }
+    }
+  </style>
 </head>
+
 <body>
-<article>
-    <h1>We&rsquo;ll be back soon!</h1>
-    <div>
-        <p>Sorry for the inconvenience but we&rsquo;re performing some maintenance at the moment. If you need to you can always <a href="mailto:#">contact us</a>, otherwise we&rsquo;ll be back online shortly!</p>
-        <p>&mdash; maintaner</p>
-    </div>
-</article>
+  <main class="wrap">
+    <section class="row">
+      <img class="hero" src="./app/static/favicon_io/fixin.png" alt="Maintenance" />
+      <div class="text">
+        <h1>We’ll be back soon!</h1>
+        <p>
+          We’re doing maintenance right now. If you need help,
+          <a href="mailto:support@yourdomain.com">contact us</a>.
+        </p>
+        <div class="sig">— maintainer</div>
+      </div>
+    </section>
+  </main>
 </body>
 </html>
