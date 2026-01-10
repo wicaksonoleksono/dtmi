@@ -1,7 +1,7 @@
 include .env
 export
 
-.PHONY: help build up down logs shell restart clean db-up db-down db-logs db-shell dev-up dev-down prod-up prod-down
+.PHONY: help build up down logs shell restart clean db-up db-down db-logs db-shell dev-up dev-down prod-up prod-down nginx-install nginx-reload
 
 help:
 	@echo "Optima Flask App - Docker Commands"
@@ -30,6 +30,10 @@ help:
 	@echo "  db-down    - Stop ChromaDB container"
 	@echo "  db-logs    - View ChromaDB logs"
 	@echo "  db-shell   - Open shell in ChromaDB container"
+	@echo ""
+	@echo "Nginx:"
+	@echo "  nginx-install - Copy config to sites-available and enable"
+	@echo "  nginx-reload  - Test and reload nginx"
 
 build:
 	docker compose build
@@ -81,3 +85,13 @@ prod-up: db-up
 
 prod-down: down db-down
 	@echo "Prod stopped!"
+
+nginx-install:
+	sudo cp nginx.conf /etc/nginx/sites-available/dtmi
+	sudo ln -sf /etc/nginx/sites-available/dtmi /etc/nginx/sites-enabled/dtmi
+	sudo cp backsoon.html /var/www/html/dtmi/backsoon.html
+	@echo "Nginx config installed"
+
+nginx-reload:
+	sudo nginx -t && sudo systemctl reload nginx
+	@echo "Nginx reloaded"
