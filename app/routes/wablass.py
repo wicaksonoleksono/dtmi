@@ -13,17 +13,27 @@ logger.addHandler(handler)
 wablas_bp = Blueprint('wablas_bp', __name__)
 
 
-async def send_wablas_message(recipient_phone: str, message_text: str) -> bool:
+async def send_wablas_message(recipient_phone: str, message_text: str) -> tuple[bool, str]:
+    """Send a message via Wablas API.
+
+    Returns:
+        tuple of (success: bool, detail: str) — detail contains the actual error on failure.
+    """
     api_key = current_app.config.get("WABLASS_API_KEY")
     secret_key = current_app.config.get("WABLASS_WEBHOOK_SECRET")
     logger.info(f"Sending message to: {recipient_phone}")
     logger.info(f"Message preview: {message_text[:100]}...")
-    logger.debug(f"API Key present: {bool(api_key)}")
-    logger.debug(f"Secret present: {bool(secret_key)}")
 
     if not api_key or not secret_key:
-        logger.error("WABLASS_API_KEY or WABLASS_WEBHOOK_SECRET not configured")
-        return False
+        missing = []
+        if not api_key:
+            missing.append("WABLASS_API_KEY")
+        if not secret_key:
+            missing.append("WABLASS_WEBHOOK_SECRET")
+        err = f"Missing config: {', '.join(missing)}"
+        logger.error(err)
+        return False, err
+
     api_url = 'https://sby.wablas.com/api/send-message'
     headers = {'Authorization': f"{api_key}.{secret_key}"}
     payload = {'phone': recipient_phone, 'message': message_text}
@@ -39,17 +49,23 @@ async def send_wablas_message(recipient_phone: str, message_text: str) -> bool:
                 logger.error(f"Non-JSON response from Wablas: {resp.text[:300]}")
             if resp.is_success and data.get('status') == 'success':
                 logger.info("Message sent successfully!")
-                return True
-            logger.error(f"Failed - HTTP {resp.status_code}, Data: {data}")
-            logger.error(f"Wablas send failed HTTP {resp.status_code}: {data or resp.text[:300]}")
-            return False
+                return True, "OK"
+            err = f"HTTP {resp.status_code} — {data or resp.text[:300]}"
+            logger.error(f"Wablas send failed: {err}")
+            return False, err
 
     except httpx.TimeoutException:
-        logger.error("Wablas send timeout")
-        return False
+        err = "Timeout after 15s connecting to Wablas API"
+        logger.error(err)
+        return False, err
     except httpx.HTTPError as e:
-        logger.error(f"Wablas HTTP error: {e}")
-        return False
+        err = f"HTTP error: {e}"
+        logger.error(err)
+        return False, err
+    except Exception as e:
+        err = f"Unexpected error: {e}"
+        logger.error(err)
+        return False, err
 
 
 @wablas_bp.route('/webhook', methods=['POST'])
@@ -89,17 +105,19 @@ async def webhook_endpoint():
         answer = result.get('answer') or "Maaf, saya tidak dapat menemukan jawaban."
     except Exception as e:
         print(f"[WEBHOOK DEBUG] Error generating answer: {e}")
-        await send_wablas_message(target_phone, "Maaf, terjadi kesalahan di server kami. Silakan coba lagi nanti.")
+        sent, detail = await send_wablas_message(target_phone, "Maaf, terjadi kesalahan di server kami. Silakan coba lagi nanti.")
+        if not sent:
+            print(f"[WEBHOOK DEBUG] Also failed to send error message: {detail}")
         return jsonify({'error': 'Internal server error'}), 500
 
     print(f"[WEBHOOK DEBUG] Generated answer: {answer[:100]}...")
     print(f"[WEBHOOK DEBUG] Sending reply to: {target_phone}")
 
-    sent = await send_wablas_message(target_phone, answer)
-    print(f"[WEBHOOK DEBUG] Message sent result: {sent}")
+    sent, detail = await send_wablas_message(target_phone, answer)
 
-    if not sent:
-        print("[WEBHOOK DEBUG] Failed to send message!")
-        print("[WEBHOOK DEBUG] Reply not sent; check device status or token/secret")
+    if sent:
+        print(f"[WEBHOOK DEBUG] Message sent successfully")
+    else:
+        print(f"[WEBHOOK DEBUG] FAILED to send message → {detail}")
 
     return jsonify({'status': 'success', 'message': 'Processed successfully'})
