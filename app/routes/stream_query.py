@@ -66,8 +66,7 @@ def query():
     
     # Extract validated parameters
     query = validated_params['query']
-    # query_types = validated_params['query_types']
-    query_types = "all"
+    query_types = validated_params['query_types']
     year = validated_params['year']
     top_k = validated_params['top_k']
     context_expansion_window = validated_params['context_expansion_window']
@@ -75,7 +74,6 @@ def query():
     def generate_stream():
         try:
             # Initialize services
-            context_expansion_window=current_app.config["DEFAULT_CONTEXT_EXPANSION_WINDOW"]
             router = current_app.router_agent
             filter_service = FilterService(
                 static_dir=current_app.static_folder,

@@ -33,19 +33,25 @@ Klasifikasi query ke salah satu dari 3 aksi. Output HANYA JSON, tanpa penjelasan
 
 AKSI:
 1. "rag" — Pertanyaan akademik/kampus/dosen/apapun yang butuh knowledge base (DEFAULT).
-2. "no_rag" + needs_clarification=true — Query SANGAT ambigu DAN TANPA konteks percakapan.
-3. "no_rag" + needs_clarification=false — Sapaan/chitchat (halo, terima kasih, siapa kamu, dll).
+2. "clarify" — Query SANGAT ambigu DAN TANPA konteks percakapan. Sertakan what_to_clarify.
+3. "chitchat" — Sapaan/basa-basi (halo, terima kasih, siapa kamu, bagaimana kabarmu, dll).
 
 ATURAN untuk "rag":
 - Gunakan konteks percakapan sebelumnya untuk memperjelas query.
 - JANGAN tambahkan "DTMI" di query.
-- Panjangkan singkatan di rag_optimized_query (TI→teknik industri, BPA→buku pedoman akademik, dst sesuai domain).
 - expanded_query = kalimat lengkap, rag_optimized_query = kata kunci search saja.
+- WAJIB panjangkan SEMUA singkatan di expanded_query DAN rag_optimized_query:
+  TI/Tekdus→Teknik Industri, TM/Teksin→Teknik Mesin, SKS→Sistem Kredit Semester,
+  KP→Kerja Praktik, TA→Tugas Akhir, DPA→Dosen Pembimbing Akademik,
+  KAPRODI→Kepala Program Studi, SEKPRODI→Sekretaris Program Studi,
+  KTU→Kepala Tata Usaha, TU→Tata Usaha, BPA→Buku Pedoman Akademik,
+  matkul→mata kuliah, IPK→Indeks Prestasi Kumulatif, IP→Indeks Prestasi.
+  Contoh: "kaprodi TI" → "Kepala Program Studi Teknik Industri"
 
 FORMAT OUTPUT:
 {"action": "rag", "expanded_query": "...", "rag_optimized_query": "..."}
-{"action": "no_rag", "needs_clarification": true}
-{"action": "no_rag", "needs_clarification": false}
+{"action": "clarify", "what_to_clarify": "jelaskan apa yang ambigu"}
+{"action": "chitchat"}
 """
 
         print(f"[ROUTER INIT] RouterAgent initialized with nano LLM")
@@ -114,9 +120,10 @@ Query Saat Ini: "{query}"
                 raise ValueError("No JSON found")
 
             result = json.loads(json_match.group(0))
+            action = result.get("action", "")
             print(f"[ROUTER] Parsed JSON: {result}")
 
-            if result.get("action") == "rag":
+            if action == "rag":
                 out = {
                     "action": "rag",
                     "expanded_query": result.get("expanded_query", query),
@@ -124,14 +131,22 @@ Query Saat Ini: "{query}"
                 }
                 print(f"[ROUTER] → RAG | expanded: \"{out['expanded_query']}\" | search: \"{out['rag_optimized_query']}\"")
                 return out
-            else:  # no_rag action
+            elif action == "clarify":
                 out = {
                     "action": "no_rag",
-                    "what_to_clarify": result.get("what_to_clarify", None)
+                    "what_to_clarify": result.get("what_to_clarify", "Bisa diperjelas pertanyaannya?")
                 }
-                clarify = result.get("needs_clarification", False)
-                print(f"[ROUTER] → NO_RAG | needs_clarification: {clarify} | what_to_clarify: {out['what_to_clarify']}")
+                print(f"[ROUTER] → CLARIFY | what_to_clarify: \"{out['what_to_clarify']}\"")
                 return out
+            elif action == "chitchat":
+                out = {
+                    "action": "no_rag",
+                    "what_to_clarify": None
+                }
+                print(f"[ROUTER] → CHITCHAT")
+                return out
+            else:
+                raise ValueError(f"Unknown action: '{action}'")
 
         except (json.JSONDecodeError, ValueError, KeyError, Exception) as e:
             print(f"[ROUTER ERROR] Failed to parse router response: {e}")

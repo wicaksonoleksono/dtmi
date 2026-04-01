@@ -53,7 +53,8 @@ Query: ${query}$
             return f"""Pengguna menanyakan: {original_query}
 Hal yang perlu di klarifikasi: {what_to_clarify}
 Berikan respons klarifikasi yang ramah dan membantu."""
-        return original_query
+        # Chitchat — just pass through, system prompt handles personality
+        return f"Query: {original_query}"
 
     @handle_service_errors(service_name="PromptService")
     @validate_inputs(required_params=['query'])

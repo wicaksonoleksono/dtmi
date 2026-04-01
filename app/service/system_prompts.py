@@ -29,7 +29,7 @@ Cakupan Informasi:
 - Info umum terkait UGM dan Yogyakarta
 
 Singkatan:
-- TI/Tein → Teknik Industri
+- TI/Tekdus → Teknik Industri
 - TM/Teksin → Teknik Mesin
 - DTMI → Departemen Teknik Mesin dan Industri UGM
 - SKS → Sistem Kredit Semester
