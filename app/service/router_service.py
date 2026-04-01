@@ -56,6 +56,8 @@ ACTION "no_rag" dengan needs_clarification=false:
 - Sapaan: halo, hi, terima kasih
 - Chitchat: bagaimana kabarmu?, siapa kamu?
 
+Untuk setiap singkatan yang dilist tolong di panjangkan untuk rag_optimized_query. Supaya bisa dicari.. 
+Contoh TI -> teknik industri, dst. Bedasarkan prompt yang sebelumnya. 
 FORMAT OUTPUT (JSON):
 
 RAG:
