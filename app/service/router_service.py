@@ -29,67 +29,23 @@ class RouterAgent:
 
         # Build routing instructions internally
         self.routing_instructions = """
-TUGAS: Tentukan apakah query butuh RAG atau tidak. SIMPLE.
+Klasifikasi query ke salah satu dari 3 aksi. Output HANYA JSON, tanpa penjelasan.
 
-3 KEMUNGKINAN:
-1. "rag" - Pertanyaan akademik/kampus/Dosen Nama secara general gunakan rag) (gunakan knowledge base) 
-2. "no_rag" dengan needs_clarification=true - Query tidak jelas, butuh klarifikasi
-3. "no_rag" dengan needs_clarification=false - Chitchat biasa (halo, terima kasih, dll)
+AKSI:
+1. "rag" — Pertanyaan akademik/kampus/dosen/apapun yang butuh knowledge base (DEFAULT).
+2. "no_rag" + needs_clarification=true — Query SANGAT ambigu DAN TANPA konteks percakapan.
+3. "no_rag" + needs_clarification=false — Sapaan/chitchat (halo, terima kasih, siapa kamu, dll).
 
+ATURAN untuk "rag":
+- Gunakan konteks percakapan sebelumnya untuk memperjelas query.
+- JANGAN tambahkan "DTMI" di query.
+- Panjangkan singkatan di rag_optimized_query (TI→teknik industri, BPA→buku pedoman akademik, dst sesuai domain).
+- expanded_query = kalimat lengkap, rag_optimized_query = kata kunci search saja.
 
-ATURAN SEDERHANA:
-
-ACTION "rag":
-- DEFAULT untuk SEMUA pertanyaan akademik
-- Jika ada konteks percakapan, gunakan untuk expand query
-- JANGAN tambahkan "di DTMI" atau "DTMI" di akhir query
-
-Buat 2 versi:
-- expanded_query: Query yang lebih jelas (gunakan konteks jika ada)
-- rag_optimized_query: Kata kunci untuk search
-
-ACTION "no_rag" dengan needs_clarification=true:
-- HANYA jika query SANGAT tidak jelas DAN tidak ada konteks
-- Contoh: "bagaimana?" (tanpa konteks), "apa itu?" (tanpa konteks)
-
-ACTION "no_rag" dengan needs_clarification=false:
-- Sapaan: halo, hi, terima kasih
-- Chitchat: bagaimana kabarmu?, siapa kamu?
-
-Untuk setiap singkatan yang dilist tolong di panjangkan untuk rag_optimized_query. Supaya bisa dicari.. 
-Contoh TI -> teknik industri, dst. Bedasarkan prompt yang sebelumnya. 
-FORMAT OUTPUT (JSON):
-
-RAG:
+FORMAT OUTPUT:
 {"action": "rag", "expanded_query": "...", "rag_optimized_query": "..."}
-
-No-RAG dengan klarifikasi:
 {"action": "no_rag", "needs_clarification": true}
-
-No-RAG chitchat:
 {"action": "no_rag", "needs_clarification": false}
-
-CONTOH:
-
-Query: "dimana bpa tahun 2025?"
-{"action": "rag", "expanded_query": "Dimana BPA tahun 2025?", "rag_optimized_query": "BPA 2025"}
-
-Query: "Dokumen nya"
-Context: "Human: dimana bpa tahun 2025?"
-{"action": "rag", "expanded_query": "Dokumen BPA tahun 2025", "rag_optimized_query": "dokumen BPA 2025"}
-
-Query: "halo"
-{"action": "no_rag", "needs_clarification": false}
-
-Query: "bagaimana?"
-Context: Tidak ada
-{"action": "no_rag", "needs_clarification": true}
-
-Query: "LAB teknik mesin"
-{"action": "rag", "expanded_query": "Laboratorium teknik mesin", "rag_optimized_query": "laboratorium teknik mesin"}
-Query: "Siapa ari"
-{"action": "rag", "expanded_query": "Siap Ari Dosen UGM", "rag_optimized_query": " Ari Dosen"}
-
 """
 
         print(f"[ROUTER INIT] RouterAgent initialized with nano LLM")
