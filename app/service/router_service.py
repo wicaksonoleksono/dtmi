@@ -40,13 +40,9 @@ ATURAN untuk "rag":
 - Gunakan konteks percakapan sebelumnya untuk memperjelas query.
 - JANGAN tambahkan "DTMI" di query.
 - expanded_query = kalimat lengkap, rag_optimized_query = kata kunci search saja.
-- WAJIB panjangkan SEMUA singkatan di expanded_query DAN rag_optimized_query:
-  TI/Tekdus→Teknik Industri, TM/Teksin→Teknik Mesin, SKS→Sistem Kredit Semester,
-  KP→Kerja Praktik, TA→Tugas Akhir, DPA→Dosen Pembimbing Akademik,
-  KAPRODI→Kepala Program Studi, SEKPRODI→Sekretaris Program Studi,
-  KTU→Kepala Tata Usaha, TU→Tata Usaha, BPA→Buku Pedoman Akademik,
-  matkul→mata kuliah, IPK→Indeks Prestasi Kumulatif, IP→Indeks Prestasi.
-  Contoh: "kaprodi TI" → "Kepala Program Studi Teknik Industri"
+- WAJIB ganti SEMUA singkatan di expanded_query DAN rag_optimized_query dengan bentuk panjangnya.
+  Gunakan daftar "Singkatan" dari system prompt di atas. Case-insensitive (kaprodi = KAPRODI).
+  Singkatan TIDAK BOLEH muncul di output. Ganti semua.
 
 FORMAT OUTPUT:
 {"action": "rag", "expanded_query": "...", "rag_optimized_query": "..."}
