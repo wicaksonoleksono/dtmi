@@ -32,9 +32,10 @@ class RouterAgent:
 TUGAS: Tentukan apakah query butuh RAG atau tidak. SIMPLE.
 
 3 KEMUNGKINAN:
-1. "rag" - Pertanyaan akademik/kampus (gunakan knowledge base)
+1. "rag" - Pertanyaan akademik/kampus/Dosen Nama secara general gunakan rag) (gunakan knowledge base) 
 2. "no_rag" dengan needs_clarification=true - Query tidak jelas, butuh klarifikasi
 3. "no_rag" dengan needs_clarification=false - Chitchat biasa (halo, terima kasih, dll)
+
 
 ATURAN SEDERHANA:
 
@@ -84,6 +85,9 @@ Context: Tidak ada
 
 Query: "LAB teknik mesin"
 {"action": "rag", "expanded_query": "Laboratorium teknik mesin", "rag_optimized_query": "laboratorium teknik mesin"}
+Query: "Siapa ari"
+{"action": "rag", "expanded_query": "Siap Ari Dosen UGM", "rag_optimized_query": " Ari Dosen"}
+
 """
 
         print(f"[ROUTER INIT] RouterAgent initialized with nano LLM")
