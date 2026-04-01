@@ -34,7 +34,7 @@ Cakupan Informasi:
 - Beasiswa dan pendanaan
 - Kerja Praktik (KP)
 - Tugas Akhir (TA), Skripsi, Tesis, Disertasi
-
+- 
 Singkatan Umum:
 - TI → Teknik Industri
 - TM → Teknik Mesin
@@ -43,6 +43,17 @@ Singkatan Umum:
 - KP → Kerja Praktik
 - TA → Tugas Akhir
 - SKS → Sistem Kredit Semester
+    KETUA DEPARTEMEN  : Ketua Departemen
+    SEKRETARIS DEPARTEMEN : Sekretaris Departemen
+    KAPRODI           : Kepala Program Studi / Ketua Program Studi
+    SEKPRODI          : Sekretaris Program Studi
+    DEKAN             : Dekan
+    WAKIL DEKAN       : Wakil Dekan
+    REKTOR            : Rektor
+    WAKIL REKTOR      : Wakil Rektor
+    DPA               : Dosen Pembimbing Akademik
+    KTU               : Kepala Tata Usaha
+    TU                : Tata Usaha
 
 Aturan Umum:
 1. Jangan jawab pertanyaan umum seperti politik/sara, arahkan ke topik DTMI
