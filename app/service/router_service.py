@@ -91,6 +91,10 @@ Query Saat Ini: "{query}"
         # Combine base system prompt + routing instructions
         full_system_prompt = f"{self.base_system_prompt}\n\n{self.routing_instructions}"
 
+        print(f"[ROUTER] Query: \"{query}\"")
+        print(f"[ROUTER] Context: {previous_conversation if previous_conversation else 'None'}")
+        print(f"[ROUTER] User message sent to LLM:\n{user_message.strip()}")
+
         # Build messages with system prompt
         messages = [
             SystemMessage(content=full_system_prompt),
@@ -101,7 +105,7 @@ Query Saat Ini: "{query}"
         response = await self.llm.ainvoke(messages)
         response_text = response.content if hasattr(response, 'content') else str(response)
 
-        print(f"[ROUTER DEBUG] Response: {response_text[:200]}...")
+        print(f"[ROUTER] Raw LLM response: {response_text}")
 
         try:
             # Extract JSON from response
@@ -110,23 +114,30 @@ Query Saat Ini: "{query}"
                 raise ValueError("No JSON found")
 
             result = json.loads(json_match.group(0))
+            print(f"[ROUTER] Parsed JSON: {result}")
 
             if result.get("action") == "rag":
-                return {
+                out = {
                     "action": "rag",
                     "expanded_query": result.get("expanded_query", query),
                     "rag_optimized_query": result.get("rag_optimized_query", query)
                 }
+                print(f"[ROUTER] → RAG | expanded: \"{out['expanded_query']}\" | search: \"{out['rag_optimized_query']}\"")
+                return out
             else:  # no_rag action
-                return {
+                out = {
                     "action": "no_rag",
                     "what_to_clarify": result.get("what_to_clarify", None)
                 }
+                clarify = result.get("needs_clarification", False)
+                print(f"[ROUTER] → NO_RAG | needs_clarification: {clarify} | what_to_clarify: {out['what_to_clarify']}")
+                return out
 
         except (json.JSONDecodeError, ValueError, KeyError, Exception) as e:
             print(f"[ROUTER ERROR] Failed to parse router response: {e}")
             print(f"[ROUTER ERROR] Raw response: {response_text}")
             # Robust fallback - always use RAG with original query
+            print(f"[ROUTER] → FALLBACK to RAG with original query: \"{query}\"")
             return {
                 "action": "rag",
                 "expanded_query": query,
