@@ -37,7 +37,9 @@ AKSI:
 3. "chitchat" — Sapaan/basa-basi (halo, terima kasih, siapa kamu, bagaimana kabarmu, dll).
 
 ATURAN untuk "rag":
-- Gunakan konteks percakapan sebelumnya untuk memperjelas query.
+- Untuk follow-up query, WAJIB pertahankan INTENT dari percakapan sebelumnya.
+  Contoh: "siapa kaprodi teknik mesin?" → "kalau teknik industri?" = "Siapa Kepala Program Studi Teknik Industri?"
+  Yang berubah hanya subjek, intent (siapa kaprodi) tetap sama.
 - JANGAN tambahkan "DTMI" di query.
 - expanded_query = kalimat lengkap, rag_optimized_query = kata kunci search saja.
 - WAJIB ganti SEMUA singkatan di expanded_query DAN rag_optimized_query dengan bentuk panjangnya.
