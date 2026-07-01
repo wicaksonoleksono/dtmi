@@ -1,100 +1,81 @@
-.ONESHELL:
-DTMI_PATH := /var/www/html/dtmi
-SHELL := /bin/bash
+DTMI_PATH := .
 
 include $(DTMI_PATH)/.env
 export
 
-.PHONY: help build up down logs shell restart clean db-up db-down db-logs db-shell dev-up dev-down prod-up prod-down nginx-install nginx-reload
-
-# Helper to avoid typing cd everywhere
-define setup_env
-	cd $(DTMI_PATH)
-endef
+.PHONY: help build up down logs shell restart clean db-up db-down db-logs db-shell dev-up dev-down prod-up prod-down nginx-install nginx-reload test-wablas
 
 help:
-	@echo "Optima Flask App - Docker Commands"
-	@echo "Usage: make [target]"
+	@echo Optima Flask App - Docker Commands
+	@echo Usage: make [target]
 
 # --- Docker Operations ---
 
 build:
-	$(setup_env)
 	docker compose build
 
 up:
-	$(setup_env)
 	docker compose up -d
 
 down:
-	$(setup_env)
 	docker compose down
 
 logs:
-	$(setup_env)
-	docker compose logs -f
+	docker compose logs -f --tail 100
 
 shell:
-	$(setup_env)
 	docker compose exec flask-app /bin/bash
 
 restart:
-	$(setup_env)
 	docker compose restart
 
 clean:
-	$(setup_env)
 	docker compose down --rmi local -v
 
 # --- Database (ChromaDB) ---
 
 db-up:
-	$(setup_env)
 	docker compose -f docker-compose.chromadb.yml up -d
 
 db-down:
-	$(setup_env)
 	docker compose -f docker-compose.chromadb.yml down
 
 db-logs:
-	$(setup_env)
-	docker compose -f docker-compose.chromadb.yml logs -f
+	docker compose -f docker-compose.chromadb.yml logs -f --tail 100
 
 db-shell:
-	$(setup_env)
 	docker compose -f docker-compose.chromadb.yml exec chromadb /bin/sh
 
 # --- Environments ---
 
 dev-up: db-up
-	$(setup_env)
 	docker compose up -d
-	@echo "Dev mode started on port $(APP_PORT)"
+	@echo Dev mode started on port $(APP_PORT)
 
 dev-down: down db-down
-	@echo "Dev stopped!"
+	@echo Dev stopped!
 
 prod-up: db-up
-	$(setup_env)
 	docker compose -f docker-compose.yml up -d
-	@echo "Prod mode started"
+	@echo Prod mode started
 
 prod-down: down db-down
 
-# --- Nginx ---
+# --- Wablas ---
+
+# Connection diagnostic. Send real msg:  make test-wablas PHONE=628xxxxxxxxxx
+test-wablas:
+	docker compose exec flask-app python test_wablas.py $(PHONE)
+
+# --- Nginx (Linux only) ---
 
 nginx-install:
-	$(setup_env)
-	@echo "Installing Nginx configs..."
-	# We copy from the local folder (where you are) to the system Nginx folders
+	@echo Installing Nginx configs...
 	sudo cp nginx.conf /etc/nginx/sites-available/dtmi
 	sudo ln -sf /etc/nginx/sites-available/dtmi /etc/nginx/sites-enabled/dtmi
-	
-	# Since backsoon.html is already in $(DTMI_PATH), 
-	# we just ensure permissions are correct instead of copying it to itself.
 	sudo chmod 644 backsoon.html
-	@echo "Nginx setup complete for $(DTMI_PATH)"
+	@echo Nginx setup complete for $(DTMI_PATH)
 
 nginx-reload:
 	sudo nginx -t && sudo systemctl reload nginx
-	@echo "Nginx reloaded"
+	@echo Nginx reloaded
